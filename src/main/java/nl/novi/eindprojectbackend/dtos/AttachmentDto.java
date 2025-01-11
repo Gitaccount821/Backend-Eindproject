@@ -1,23 +1,17 @@
-package nl.novi.eindprojectbackend.models;
+package nl.novi.eindprojectbackend.dtos;
 
-import jakarta.persistence.*;
-
-@Entity
-public class PdfAttachment {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+public class AttachmentDto {
     private Long id;
-
     private String fileName;
-
     private String filePath;
 
-    @ManyToOne
-    @JoinColumn(name = "car_id")
-    private Car car;
+    public AttachmentDto(Long id, String fileName, String filePath) {
+        this.id = id;
+        this.fileName = fileName;
+        this.filePath = filePath;
+    }
 
-    // Getters and setters
+    // Getters and Setters
     public Long getId() {
         return id;
     }
@@ -40,13 +34,5 @@ public class PdfAttachment {
 
     public void setFilePath(String filePath) {
         this.filePath = filePath;
-    }
-
-    public Car getCar() {
-        return car;
-    }
-
-    public void setCar(Car car) {
-        this.car = car;
     }
 }

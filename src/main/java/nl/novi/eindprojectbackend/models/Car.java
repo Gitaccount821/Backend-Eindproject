@@ -1,6 +1,8 @@
 package nl.novi.eindprojectbackend.models;
 
 import jakarta.persistence.*;
+
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -26,7 +28,7 @@ public class Car {
     private Double totalRepairCost; // Total cost van repairs
 
     @OneToMany(cascade = CascadeType.ALL, mappedBy = "car")
-    private List<PdfAttachment> attachments; // pdf lijst gekoppeld aan car
+    private List<PdfAttachment> attachments = new ArrayList<>(); // pdf lijst gekoppeld aan car
 
     // Getters and setters
     public Long getId() {
