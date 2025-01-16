@@ -1,9 +1,7 @@
 package nl.novi.eindprojectbackend.models;
 
 import jakarta.persistence.*;
-
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 @Entity
@@ -13,22 +11,19 @@ public class Car {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String carType; //Car type
+    private String carType;
 
-    private String clientNumber; // Klantnummer
+    private String clientNumber;
 
-    @Temporal(TemporalType.DATE)
-    private Date repairDate; // repair datum
+    private String repairDate;
 
-    @ElementCollection
-    @CollectionTable(name = "car_repairs", joinColumns = @JoinColumn(name = "car_id"))
-    @Column(name = "repair")
-    private List<String> repairs; // lijst van de uitgevoerde repairs
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Repair> repairs = new ArrayList<>();
 
-    private Double totalRepairCost; // Total cost van repairs
+    private Double totalRepairCost;
 
-    @OneToMany(cascade = CascadeType.ALL, mappedBy = "car")
-    private List<PdfAttachment> attachments = new ArrayList<>(); // pdf lijst gekoppeld aan car
+    @OneToMany(mappedBy = "car", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<PdfAttachment> attachments = new ArrayList<>();
 
     // Getters and setters
     public Long getId() {
@@ -55,19 +50,19 @@ public class Car {
         this.clientNumber = clientNumber;
     }
 
-    public Date getRepairDate() {
+    public String getRepairDate() {
         return repairDate;
     }
 
-    public void setRepairDate(Date repairDate) {
+    public void setRepairDate(String repairDate) {
         this.repairDate = repairDate;
     }
 
-    public List<String> getRepairs() {
+    public List<Repair> getRepairs() {
         return repairs;
     }
 
-    public void setRepairs(List<String> repairs) {
+    public void setRepairs(List<Repair> repairs) {
         this.repairs = repairs;
     }
 

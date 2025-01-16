@@ -2,8 +2,10 @@ package nl.novi.eindprojectbackend.controllers;
 
 import nl.novi.eindprojectbackend.dtos.CarDto;
 import nl.novi.eindprojectbackend.dtos.AttachmentDto;
+import nl.novi.eindprojectbackend.dtos.RepairDto;
 import nl.novi.eindprojectbackend.models.Car;
 import nl.novi.eindprojectbackend.models.PdfAttachment;
+import nl.novi.eindprojectbackend.models.Repair;
 import nl.novi.eindprojectbackend.services.CarService;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +22,7 @@ public class CarController {
     @Autowired
     private CarService carService;
 
-    // Endpoint nieuwe auto
+
     @PostMapping(produces = "application/json", consumes = "application/json")
     public ResponseEntity<CarDto> addCar(@RequestBody Car car) {
         Car savedCar = carService.addCar(car);
@@ -28,7 +30,7 @@ public class CarController {
         return ResponseEntity.ok(carDto);
     }
 
-    // Endpoint get all (auto)
+
     @GetMapping(produces = "application/json")
     public ResponseEntity<List<CarDto>> getAllCars() {
         List<Car> cars = carService.getAllCars();
@@ -38,7 +40,7 @@ public class CarController {
         return ResponseEntity.ok(carDtos);
     }
 
-    // Endpoint auto via ID
+
     @GetMapping(value = "/{id}", produces = "application/json")
     public ResponseEntity<CarDto> getCarById(@PathVariable Long id) {
         return carService.getCarById(id)
@@ -46,7 +48,7 @@ public class CarController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // Endpoint update auto
+
     @PutMapping(value = "/{id}", produces = "application/json", consumes = "application/json")
     public ResponseEntity<CarDto> updateCar(@PathVariable Long id, @RequestBody Car car) {
         try {
@@ -58,14 +60,14 @@ public class CarController {
         }
     }
 
-    // Endpoint delete auto via ID
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCar(@PathVariable Long id) {
         carService.deleteCar(id);
         return ResponseEntity.noContent().build();
     }
 
-    // Endpoint add PDF
+
     @PostMapping(value = "/{id}/attachments", produces = "application/json", consumes = "application/json")
     public ResponseEntity<AttachmentDto> addPdfAttachment(
             @PathVariable Long id,
@@ -79,7 +81,7 @@ public class CarController {
         }
     }
 
-    // Endpoint get PDF
+
     @GetMapping(value = "/{id}/attachments", produces = "application/json")
     public ResponseEntity<List<AttachmentDto>> getAttachmentsByCarId(@PathVariable Long id) {
         try {
@@ -93,14 +95,16 @@ public class CarController {
         }
     }
 
-    // Helper method, convert Car naar CarDto
+
     private CarDto convertToCarDto(Car car) {
         return new CarDto(
                 car.getId(),
                 car.getCarType(),
                 car.getClientNumber(),
                 car.getRepairDate() != null ? car.getRepairDate().toString() : null,
-                car.getRepairs() != null ? car.getRepairs() : List.of(),
+                car.getRepairs() != null ? car.getRepairs().stream()
+                        .map(this::convertToRepairDto)
+                        .collect(Collectors.toList()) : List.of(),
                 car.getTotalRepairCost(),
                 car.getAttachments() != null ? car.getAttachments().stream()
                         .map(this::convertToAttachmentDto)
@@ -108,7 +112,17 @@ public class CarController {
         );
     }
 
-    // Helper method, convert PdfAttachment naar AttachmentDto
+
+    private RepairDto convertToRepairDto(Repair repair) {
+        return new RepairDto(
+                repair.getId(),
+                repair.getRepairType(),
+                repair.getCost(),
+                repair.getDate() != null ? repair.getDate().toString() : null
+        );
+    }
+
+
     private AttachmentDto convertToAttachmentDto(PdfAttachment attachment) {
         return new AttachmentDto(
                 attachment.getId(),

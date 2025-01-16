@@ -1,6 +1,7 @@
 package nl.novi.eindprojectbackend.dtos;
 
 import nl.novi.eindprojectbackend.models.Car;
+
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -9,17 +10,25 @@ public class CarDto {
     private String carType;
     private String clientNumber;
     private String repairDate;
-    private List<String> repairs;
+    private List<RepairDto> repairs; // Updated to use RepairDto
     private Double totalRepairCost;
     private List<AttachmentDto> attachments;
-
 
     public CarDto(Car car) {
         this.id = car.getId();
         this.carType = car.getCarType();
         this.clientNumber = car.getClientNumber();
         this.repairDate = car.getRepairDate() != null ? car.getRepairDate().toString() : null; // Null-safe handling
-        this.repairs = car.getRepairs() != null ? car.getRepairs() : List.of();  // Null-safe handling
+        this.repairs = (car.getRepairs() != null)
+                ? car.getRepairs().stream()
+                .map(repair -> new RepairDto(
+                        repair.getId(),
+                        repair.getRepairType(),
+                        repair.getCost(),
+                        repair.getDate() != null ? repair.getDate().toString() : null // Ensure that date is handled properly
+                ))
+                .collect(Collectors.toList())
+                : List.of();
         this.totalRepairCost = car.getTotalRepairCost();
         this.attachments = car.getAttachments() != null
                 ? car.getAttachments().stream()
@@ -29,12 +38,11 @@ public class CarDto {
                         attachment.getFilePath()
                 ))
                 .collect(Collectors.toList())
-                : List.of();  // Null-safe handling
+                : List.of(); // Null-safe handling
     }
 
-
     public CarDto(Long id, String carType, String clientNumber, String repairDate,
-                  List<String> repairs, Double totalRepairCost, List<AttachmentDto> attachments) {
+                  List<RepairDto> repairs, Double totalRepairCost, List<AttachmentDto> attachments) {
         this.id = id;
         this.carType = carType;
         this.clientNumber = clientNumber;
@@ -77,11 +85,11 @@ public class CarDto {
         this.repairDate = repairDate;
     }
 
-    public List<String> getRepairs() {
+    public List<RepairDto> getRepairs() {
         return repairs;
     }
 
-    public void setRepairs(List<String> repairs) {
+    public void setRepairs(List<RepairDto> repairs) {
         this.repairs = repairs;
     }
 
