@@ -12,6 +12,9 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 
+
+
+
 @Service
 public class CarService {
 
@@ -42,11 +45,17 @@ public class CarService {
     // Update auto details
     public Car updateCar(Long id, Car updatedCar) {
         return carRepository.findById(id).map(car -> {
+
             car.setCarType(updatedCar.getCarType());
             car.setClientNumber(updatedCar.getClientNumber());
-            // Removed repairDate as it's no longer part of the Car model
+
             car.setRepairs(updatedCar.getRepairs());
-            car.setTotalRepairCost(updatedCar.getTotalRepairCost());
+
+            double totalCost = updatedCar.getRepairs().stream()
+                    .mapToDouble(repair -> repair.getCost() != null ? repair.getCost() : 0.0) // Safeguard against null costs
+                    .sum();
+            car.setTotalRepairCost(totalCost);
+
             return carRepository.save(car);
         }).orElseThrow(() -> new IllegalArgumentException("Car not found"));
     }
@@ -75,18 +84,18 @@ public class CarService {
         Car car = carRepository.findById(carId)
                 .orElseThrow(() -> new IllegalArgumentException("Car not found"));
 
-        if (car.getRepairs() == null) {
-            car.setRepairs(List.of(repair));
-        } else {
-            car.getRepairs().add(repair);
-        }
+        repair.setCar(car);
+
+        car.getRepairs().add(repair);
 
         double totalCost = car.getRepairs().stream()
-                .mapToDouble(Repair::getCost)
+                .mapToDouble(r -> r.getCost() != null ? r.getCost() : 0.0)
                 .sum();
+
         car.setTotalRepairCost(totalCost);
 
-        return carRepository.save(car);
+        carRepository.save(car);
+        return car;
     }
 
     public List<Repair> getRepairsByCarId(Long carId) {

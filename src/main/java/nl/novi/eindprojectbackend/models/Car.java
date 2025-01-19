@@ -17,10 +17,11 @@ public class Car {
 
     private String repairRequestDate;
 
-    @OneToMany(mappedBy = "car", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "car", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<Repair> repairs = new ArrayList<>();
 
-    private Double totalRepairCost;
+    @Column(nullable = false)
+    private Double totalRepairCost = 0.0;
 
     @OneToMany(mappedBy = "car", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PdfAttachment> attachments = new ArrayList<>();
@@ -80,5 +81,11 @@ public class Car {
 
     public void setAttachments(List<PdfAttachment> attachments) {
         this.attachments = attachments;
+    }
+
+    public void updateTotalRepairCost() {
+        this.totalRepairCost = repairs.stream()
+                .mapToDouble(Repair::getCost)
+                .sum();
     }
 }

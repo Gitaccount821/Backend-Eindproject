@@ -121,11 +121,22 @@ public class CarController {
     public ResponseEntity<CarDto> addRepairToCar(@PathVariable Long carId, @RequestBody RepairDto repairDto) {
         try {
 
+
             SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
             Date repairRequestDate = sdf.parse(repairDto.getRepairRequestDate());
 
 
-            repairService.addRepairToCar(carId, repairDto.getRepairType(), repairDto.getCost(), repairRequestDate);
+            Car car = carService.getCarById(carId).orElseThrow(() -> new IllegalArgumentException("Car not found"));
+
+
+            Repair repair = new Repair();
+            repair.setRepairType(repairDto.getRepairType());
+            repair.setCost(repairDto.getCost());
+            repair.setRepairRequestDate(repairRequestDate);
+            repair.setRepairDate(null);
+            repair.setCar(car);
+
+            carService.addRepairToCar(carId, repair);
 
 
             Car updatedCar = carService.getCarById(carId).orElseThrow(() -> new IllegalArgumentException("Car not found"));
