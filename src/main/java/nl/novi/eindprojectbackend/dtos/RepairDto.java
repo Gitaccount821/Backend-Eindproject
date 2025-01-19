@@ -1,8 +1,7 @@
 package nl.novi.eindprojectbackend.dtos;
 
-import java.time.LocalDateTime;
-
 public class RepairDto {
+
     private Long id;
     private String repairType;
     private Double cost;

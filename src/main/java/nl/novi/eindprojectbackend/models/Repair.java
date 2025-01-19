@@ -2,6 +2,7 @@ package nl.novi.eindprojectbackend.models;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Entity
 public class Repair {
@@ -17,6 +18,21 @@ public class Repair {
     @ManyToOne
     @JoinColumn(name = "car_id")
     private Car car;
+
+
+    public Repair() {}
+
+
+    public Repair(String repairType, Double cost, String date) {
+        this.repairType = repairType;
+        this.cost = cost;
+
+
+        if (date != null && !date.isEmpty()) {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+            this.date = LocalDateTime.parse(date, formatter);
+        }
+    }
 
     // Getters and Setters
     public Long getId() {

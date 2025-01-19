@@ -2,9 +2,10 @@ package nl.novi.eindprojectbackend.services;
 
 import nl.novi.eindprojectbackend.models.Car;
 import nl.novi.eindprojectbackend.models.PdfAttachment;
-import nl.novi.eindprojectbackend.models.Repair; // Import the Repair enum
+import nl.novi.eindprojectbackend.models.Repair;
 import nl.novi.eindprojectbackend.repositories.CarRepository;
 import nl.novi.eindprojectbackend.repositories.PdfAttachmentRepository;
+import nl.novi.eindprojectbackend.repositories.RepairRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +21,10 @@ public class CarService {
     @Autowired
     private PdfAttachmentRepository pdfAttachmentRepository;
 
-    // nieuwe auto toevoegen
+    @Autowired
+    private RepairRepository RepairRepository;
+
+    // Nieuwe auto toevoegen
     public Car addCar(Car car) {
         return carRepository.save(car);
     }
@@ -52,7 +56,7 @@ public class CarService {
         carRepository.deleteById(id);
     }
 
-    // Add PDF attachment (niet zeker of dit gaat werken)
+    // Add PDF attachment
     public PdfAttachment addPdfAttachment(Long carId, PdfAttachment attachment) {
         Car car = carRepository.findById(carId)
                 .orElseThrow(() -> new IllegalArgumentException("Car not found"));
@@ -60,32 +64,45 @@ public class CarService {
         return pdfAttachmentRepository.save(attachment);
     }
 
-    // Get alle attachments
     public List<PdfAttachment> getAttachmentsByCarId(Long carId) {
         Car car = carRepository.findById(carId)
                 .orElseThrow(() -> new IllegalArgumentException("Car not found"));
         return car.getAttachments();
     }
 
-    // Een enkele repair toevoegen aan een auto
+
     public Car addRepairToCar(Long carId, Repair repair) {
         Car car = carRepository.findById(carId)
                 .orElseThrow(() -> new IllegalArgumentException("Car not found"));
 
+
         if (car.getRepairs() == null) {
-            car.setRepairs(List.of(repair)); // Als er geen reparaties zijn, start met een nieuwe lijst
+            car.setRepairs(List.of(repair));
         } else {
-            car.getRepairs().add(repair); // Voeg de nieuwe reparatie toe aan de lijst
+            car.getRepairs().add(repair);
         }
 
-        return carRepository.save(car); // Sla de wijzigingen op
+
+        double totalCost = car.getRepairs().stream()
+                .mapToDouble(Repair::getCost)
+                .sum();
+        car.setTotalRepairCost(totalCost);
+
+        return carRepository.save(car);
     }
 
-    // Alle repairs van een specifieke auto ophalen
     public List<Repair> getRepairsByCarId(Long carId) {
         Car car = carRepository.findById(carId)
                 .orElseThrow(() -> new IllegalArgumentException("Car not found"));
 
-        return car.getRepairs(); // Retourneer de lijst van reparaties
+        return car.getRepairs();
+    }
+
+    public nl.novi.eindprojectbackend.repositories.RepairRepository getRepairRepository() {
+        return RepairRepository;
+    }
+
+    public void setRepairRepository(nl.novi.eindprojectbackend.repositories.RepairRepository repairRepository) {
+        RepairRepository = repairRepository;
     }
 }

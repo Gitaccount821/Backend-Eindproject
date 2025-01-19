@@ -95,6 +95,24 @@ public class CarController {
         }
     }
 
+    @PostMapping(value = "/{carId}/repairs", consumes = "application/json", produces = "application/json")
+    public ResponseEntity<CarDto> addRepairToCar(@PathVariable Long carId, @RequestBody RepairDto repairDto) {
+        try {
+
+            Repair repair = new Repair(repairDto.getRepairType(), repairDto.getCost(), repairDto.getDate());
+
+
+            Car updatedCar = carService.addRepairToCar(carId, repair);
+
+
+            CarDto carDto = convertToCarDto(updatedCar);
+            return ResponseEntity.ok(carDto);
+        } catch (Exception e) {
+
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
 
     private CarDto convertToCarDto(Car car) {
         return new CarDto(
