@@ -1,6 +1,7 @@
 package nl.novi.eindprojectbackend.models;
 
 import jakarta.persistence.*;
+import java.util.Date;
 
 @Entity
 public class Repair {
@@ -11,14 +12,20 @@ public class Repair {
 
     private String repairType;
     private Double cost;
-    private String repairRequestDate; // When the repair is requested
 
     @ManyToOne
+    @JoinColumn(name = "car_id")
     private Car car;
+
+    private Date repairRequestDate;
+
+    private Date repairDate;
 
 
     public Repair() {
+        // This constructor is required for JPA
     }
+
 
     public Repair(String repairType, Double cost, Car car) {
         this.repairType = repairType;
@@ -51,19 +58,27 @@ public class Repair {
         this.cost = cost;
     }
 
-    public String getRepairRequestDate() {
-        return repairRequestDate;
-    }
-
-    public void setRepairRequestDate(String repairRequestDate) {
-        this.repairRequestDate = repairRequestDate;
-    }
-
     public Car getCar() {
         return car;
     }
 
     public void setCar(Car car) {
         this.car = car;
+    }
+
+    public Date getRepairRequestDate() {
+        return repairRequestDate;
+    }
+
+    public void setRepairRequestDate(Date repairRequestDate) {
+        this.repairRequestDate = repairRequestDate;
+    }
+
+    public Date getRepairDate() {
+        return repairDate;
+    }
+
+    public void setRepairDate(Date repairDate) {
+        this.repairDate = repairDate;
     }
 }

@@ -15,9 +15,7 @@ public class Car {
 
     private String clientNumber;
 
-    private String repairDate;
-
-
+    private String repairRequestDate;
 
     @OneToMany(mappedBy = "car", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Repair> repairs = new ArrayList<>();
@@ -52,6 +50,14 @@ public class Car {
         this.clientNumber = clientNumber;
     }
 
+    public String getRepairRequestDate() {
+        return repairRequestDate;
+    }
+
+    public void setRepairRequestDate(String repairRequestDate) {
+        this.repairRequestDate = repairRequestDate;
+    }
+
     public List<Repair> getRepairs() {
         return repairs;
     }
@@ -75,13 +81,4 @@ public class Car {
     public void setAttachments(List<PdfAttachment> attachments) {
         this.attachments = attachments;
     }
-
-    public String getRepairDate() {
-        return repairDate;
-    }
-
-    public void setRepairDate(String repairDate) {
-        this.repairDate = repairDate;
-    }
-
 }

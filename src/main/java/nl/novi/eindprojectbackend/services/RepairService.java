@@ -8,6 +8,8 @@ import nl.novi.eindprojectbackend.repositories.RepairRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Date;
+
 @Service
 public class RepairService {
 
@@ -17,17 +19,19 @@ public class RepairService {
     @Autowired
     private RepairRepository repairRepository;
 
-    public Repair addRepairToCar(Long carId, String repairType, Double cost) {
+
+    public Repair addRepairToCar(Long carId, String repairType, Double cost, Date repairRequestDate) {
+
 
         Car car = carRepository.findById(carId)
                 .orElseThrow(() -> new IllegalArgumentException("Car not found"));
 
 
         Repair repair = new Repair(repairType, cost, car);
+        repair.setRepairRequestDate(repairRequestDate);
 
 
         car.getRepairs().add(repair);
-
 
         repairRepository.save(repair);
         carRepository.save(car);

@@ -22,7 +22,7 @@ public class CarService {
     private PdfAttachmentRepository pdfAttachmentRepository;
 
     @Autowired
-    private RepairRepository RepairRepository;
+    private RepairRepository repairRepository;
 
     // Nieuwe auto toevoegen
     public Car addCar(Car car) {
@@ -44,13 +44,12 @@ public class CarService {
         return carRepository.findById(id).map(car -> {
             car.setCarType(updatedCar.getCarType());
             car.setClientNumber(updatedCar.getClientNumber());
-            car.setRepairDate(updatedCar.getRepairDate());  // This will work once `repairDate` is back in the Car model
+            // Removed repairDate as it's no longer part of the Car model
             car.setRepairs(updatedCar.getRepairs());
             car.setTotalRepairCost(updatedCar.getTotalRepairCost());
             return carRepository.save(car);
         }).orElseThrow(() -> new IllegalArgumentException("Car not found"));
     }
-
 
     // Delete auto via ID
     public void deleteCar(Long id) {
@@ -71,18 +70,16 @@ public class CarService {
         return car.getAttachments();
     }
 
-
+    // Add repair to car
     public Car addRepairToCar(Long carId, Repair repair) {
         Car car = carRepository.findById(carId)
                 .orElseThrow(() -> new IllegalArgumentException("Car not found"));
-
 
         if (car.getRepairs() == null) {
             car.setRepairs(List.of(repair));
         } else {
             car.getRepairs().add(repair);
         }
-
 
         double totalCost = car.getRepairs().stream()
                 .mapToDouble(Repair::getCost)
@@ -99,11 +96,12 @@ public class CarService {
         return car.getRepairs();
     }
 
-    public nl.novi.eindprojectbackend.repositories.RepairRepository getRepairRepository() {
-        return RepairRepository;
+    // Getters and Setters
+    public RepairRepository getRepairRepository() {
+        return repairRepository;
     }
 
-    public void setRepairRepository(nl.novi.eindprojectbackend.repositories.RepairRepository repairRepository) {
-        RepairRepository = repairRepository;
+    public void setRepairRepository(RepairRepository repairRepository) {
+        this.repairRepository = repairRepository;
     }
 }
