@@ -18,20 +18,20 @@ public class RepairService {
     private RepairRepository repairRepository;
 
     public Repair addRepairToCar(Long carId, String repairType, Double cost) {
-        // Fetch the car by ID
+
         Car car = carRepository.findById(carId)
                 .orElseThrow(() -> new IllegalArgumentException("Car not found"));
 
-        // Create the repair and associate it with the car
-        Repair repair = new Repair(repairType, cost, car); // Make sure the constructor matches your Repair entity
 
-        // Add the repair to the car's repairs list
+        Repair repair = new Repair(repairType, cost, car);
+
+
         car.getRepairs().add(repair);
 
-        // Save the repair and the car (note: saving the car will persist both)
-        repairRepository.save(repair); // Save the repair
-        carRepository.save(car); // Optionally, save the car again to ensure everything is persisted
 
-        return repair; // Return the newly added repair object
+        repairRepository.save(repair);
+        carRepository.save(car);
+
+        return repair;
     }
 }

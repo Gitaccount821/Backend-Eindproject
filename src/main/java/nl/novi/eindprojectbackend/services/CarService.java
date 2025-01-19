@@ -44,12 +44,13 @@ public class CarService {
         return carRepository.findById(id).map(car -> {
             car.setCarType(updatedCar.getCarType());
             car.setClientNumber(updatedCar.getClientNumber());
-            car.setRepairDate(updatedCar.getRepairDate());
+            car.setRepairDate(updatedCar.getRepairDate());  // This will work once `repairDate` is back in the Car model
             car.setRepairs(updatedCar.getRepairs());
             car.setTotalRepairCost(updatedCar.getTotalRepairCost());
             return carRepository.save(car);
         }).orElseThrow(() -> new IllegalArgumentException("Car not found"));
     }
+
 
     // Delete auto via ID
     public void deleteCar(Long id) {

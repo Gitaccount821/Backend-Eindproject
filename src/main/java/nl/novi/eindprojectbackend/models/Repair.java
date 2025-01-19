@@ -4,25 +4,29 @@ import jakarta.persistence.*;
 
 @Entity
 public class Repair {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
     private String repairType;
     private Double cost;
+    private String repairRequestDate; // When the repair is requested
 
-    // Many-to-one association with Car
     @ManyToOne
-    @JoinColumn(name = "car_id")  // Foreign key to associate with Car
     private Car car;
 
-    // Constructor with car
+
+    public Repair() {
+    }
+
     public Repair(String repairType, Double cost, Car car) {
         this.repairType = repairType;
         this.cost = cost;
         this.car = car;
     }
 
-    // Getters and Setters
+    // Getters and setters
     public Long getId() {
         return id;
     }
@@ -45,6 +49,14 @@ public class Repair {
 
     public void setCost(Double cost) {
         this.cost = cost;
+    }
+
+    public String getRepairRequestDate() {
+        return repairRequestDate;
+    }
+
+    public void setRepairRequestDate(String repairRequestDate) {
+        this.repairRequestDate = repairRequestDate;
     }
 
     public Car getCar() {

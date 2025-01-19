@@ -9,7 +9,7 @@ public class CarDto {
     private Long id;
     private String carType;
     private String clientNumber;
-    private List<RepairDto> repairs; // Updated to use RepairDto
+    private List<RepairDto> repairs;
     private Double totalRepairCost;
     private List<AttachmentDto> attachments;
 
@@ -22,7 +22,7 @@ public class CarDto {
                 .map(repair -> new RepairDto(
                         repair.getId(),
                         repair.getRepairType(),
-                        repair.getCost() // No date anymore
+                        repair.getCost()
                 ))
                 .collect(Collectors.toList())
                 : List.of();

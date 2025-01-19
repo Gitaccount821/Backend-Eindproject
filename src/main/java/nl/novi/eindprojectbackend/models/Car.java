@@ -17,7 +17,9 @@ public class Car {
 
     private String repairDate;
 
-    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true)
+
+
+    @OneToMany(mappedBy = "car", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Repair> repairs = new ArrayList<>();
 
     private Double totalRepairCost;
@@ -50,14 +52,6 @@ public class Car {
         this.clientNumber = clientNumber;
     }
 
-    public String getRepairDate() {
-        return repairDate;
-    }
-
-    public void setRepairDate(String repairDate) {
-        this.repairDate = repairDate;
-    }
-
     public List<Repair> getRepairs() {
         return repairs;
     }
@@ -81,4 +75,13 @@ public class Car {
     public void setAttachments(List<PdfAttachment> attachments) {
         this.attachments = attachments;
     }
+
+    public String getRepairDate() {
+        return repairDate;
+    }
+
+    public void setRepairDate(String repairDate) {
+        this.repairDate = repairDate;
+    }
+
 }

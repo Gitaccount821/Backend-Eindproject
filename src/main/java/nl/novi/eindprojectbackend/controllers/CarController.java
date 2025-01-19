@@ -95,13 +95,13 @@ public class CarController {
     @PostMapping(value = "/{carId}/repairs", consumes = "application/json", produces = "application/json")
     public ResponseEntity<CarDto> addRepairToCar(@PathVariable Long carId, @RequestBody RepairDto repairDto) {
         try {
-            // Use the correct method to add the repair and save it
+
             repairService.addRepairToCar(carId, repairDto.getRepairType(), repairDto.getCost());
 
-            // Fetch the updated car
+
             Car updatedCar = carService.getCarById(carId).orElseThrow(() -> new IllegalArgumentException("Car not found"));
 
-            // Convert the updated car to CarDto and return it
+
             CarDto carDto = convertToCarDto(updatedCar);
             return ResponseEntity.ok(carDto);
         } catch (Exception e) {
@@ -112,7 +112,7 @@ public class CarController {
 
 
 
-    // Helper method to convert Car entity to CarDto
+    // Helper method
     private CarDto convertToCarDto(Car car) {
         return new CarDto(
                 car.getId(),
@@ -128,7 +128,7 @@ public class CarController {
         );
     }
 
-    // Helper method to convert PdfAttachment entity to AttachmentDto
+    // Helper method
     private AttachmentDto convertToAttachmentDto(PdfAttachment attachment) {
         return new AttachmentDto(
                 attachment.getId(),
