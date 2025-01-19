@@ -1,18 +1,14 @@
 package nl.novi.eindprojectbackend.dtos;
 
 public class RepairDto {
-
     private Long id;
     private String repairType;
     private Double cost;
-    private String date;
 
-
-    public RepairDto(Long id, String repairType, Double cost, String date) {
+    public RepairDto(Long id, String repairType, Double cost) {
         this.id = id;
         this.repairType = repairType;
         this.cost = cost;
-        this.date = date;
     }
 
     // Getters and Setters
@@ -39,12 +35,5 @@ public class RepairDto {
     public void setCost(Double cost) {
         this.cost = cost;
     }
-
-    public String getDate() {
-        return date;
-    }
-
-    public void setDate(String date) {
-        this.date = date;
-    }
 }
+

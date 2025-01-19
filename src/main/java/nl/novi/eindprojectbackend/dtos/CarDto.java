@@ -9,7 +9,6 @@ public class CarDto {
     private Long id;
     private String carType;
     private String clientNumber;
-    private String repairDate;
     private List<RepairDto> repairs; // Updated to use RepairDto
     private Double totalRepairCost;
     private List<AttachmentDto> attachments;
@@ -18,14 +17,12 @@ public class CarDto {
         this.id = car.getId();
         this.carType = car.getCarType();
         this.clientNumber = car.getClientNumber();
-        this.repairDate = car.getRepairDate() != null ? car.getRepairDate().toString() : null; // Null-safe handling
         this.repairs = (car.getRepairs() != null)
                 ? car.getRepairs().stream()
                 .map(repair -> new RepairDto(
                         repair.getId(),
                         repair.getRepairType(),
-                        repair.getCost(),
-                        repair.getDate() != null ? repair.getDate().toString() : null // Ensure that date is handled properly
+                        repair.getCost() // No date anymore
                 ))
                 .collect(Collectors.toList())
                 : List.of();
@@ -41,12 +38,11 @@ public class CarDto {
                 : List.of(); // Null-safe handling
     }
 
-    public CarDto(Long id, String carType, String clientNumber, String repairDate,
-                  List<RepairDto> repairs, Double totalRepairCost, List<AttachmentDto> attachments) {
+    public CarDto(Long id, String carType, String clientNumber, List<RepairDto> repairs,
+                  Double totalRepairCost, List<AttachmentDto> attachments) {
         this.id = id;
         this.carType = carType;
         this.clientNumber = clientNumber;
-        this.repairDate = repairDate;
         this.repairs = repairs;
         this.totalRepairCost = totalRepairCost;
         this.attachments = attachments;
@@ -75,14 +71,6 @@ public class CarDto {
 
     public void setClientNumber(String clientNumber) {
         this.clientNumber = clientNumber;
-    }
-
-    public String getRepairDate() {
-        return repairDate;
-    }
-
-    public void setRepairDate(String repairDate) {
-        this.repairDate = repairDate;
     }
 
     public List<RepairDto> getRepairs() {

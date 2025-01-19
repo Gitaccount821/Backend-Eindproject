@@ -7,6 +7,7 @@ import nl.novi.eindprojectbackend.models.Car;
 import nl.novi.eindprojectbackend.models.PdfAttachment;
 import nl.novi.eindprojectbackend.models.Repair;
 import nl.novi.eindprojectbackend.services.CarService;
+import nl.novi.eindprojectbackend.services.RepairService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +23,8 @@ public class CarController {
     @Autowired
     private CarService carService;
 
+    @Autowired
+    private RepairService repairService;
 
     @PostMapping(produces = "application/json", consumes = "application/json")
     public ResponseEntity<CarDto> addCar(@RequestBody Car car) {
@@ -29,7 +32,6 @@ public class CarController {
         CarDto carDto = convertToCarDto(savedCar);
         return ResponseEntity.ok(carDto);
     }
-
 
     @GetMapping(produces = "application/json")
     public ResponseEntity<List<CarDto>> getAllCars() {
@@ -40,14 +42,12 @@ public class CarController {
         return ResponseEntity.ok(carDtos);
     }
 
-
     @GetMapping(value = "/{id}", produces = "application/json")
     public ResponseEntity<CarDto> getCarById(@PathVariable Long id) {
         return carService.getCarById(id)
                 .map(car -> ResponseEntity.ok(convertToCarDto(car)))
                 .orElse(ResponseEntity.notFound().build());
     }
-
 
     @PutMapping(value = "/{id}", produces = "application/json", consumes = "application/json")
     public ResponseEntity<CarDto> updateCar(@PathVariable Long id, @RequestBody Car car) {
@@ -60,13 +60,11 @@ public class CarController {
         }
     }
 
-
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCar(@PathVariable Long id) {
         carService.deleteCar(id);
         return ResponseEntity.noContent().build();
     }
-
 
     @PostMapping(value = "/{id}/attachments", produces = "application/json", consumes = "application/json")
     public ResponseEntity<AttachmentDto> addPdfAttachment(
@@ -80,7 +78,6 @@ public class CarController {
             return ResponseEntity.badRequest().body(null);
         }
     }
-
 
     @GetMapping(value = "/{id}/attachments", produces = "application/json")
     public ResponseEntity<List<AttachmentDto>> getAttachmentsByCarId(@PathVariable Long id) {
@@ -98,49 +95,40 @@ public class CarController {
     @PostMapping(value = "/{carId}/repairs", consumes = "application/json", produces = "application/json")
     public ResponseEntity<CarDto> addRepairToCar(@PathVariable Long carId, @RequestBody RepairDto repairDto) {
         try {
+            // Use the correct method to add the repair and save it
+            repairService.addRepairToCar(carId, repairDto.getRepairType(), repairDto.getCost());
 
-            Repair repair = new Repair(repairDto.getRepairType(), repairDto.getCost(), repairDto.getDate());
+            // Fetch the updated car
+            Car updatedCar = carService.getCarById(carId).orElseThrow(() -> new IllegalArgumentException("Car not found"));
 
-
-            Car updatedCar = carService.addRepairToCar(carId, repair);
-
-
+            // Convert the updated car to CarDto and return it
             CarDto carDto = convertToCarDto(updatedCar);
             return ResponseEntity.ok(carDto);
         } catch (Exception e) {
-
-            return ResponseEntity.badRequest().build();
+            return ResponseEntity.badRequest().body(null);
         }
     }
 
 
+
+
+    // Helper method to convert Car entity to CarDto
     private CarDto convertToCarDto(Car car) {
         return new CarDto(
                 car.getId(),
                 car.getCarType(),
                 car.getClientNumber(),
-                car.getRepairDate() != null ? car.getRepairDate().toString() : null,
                 car.getRepairs() != null ? car.getRepairs().stream()
-                        .map(this::convertToRepairDto)
+                        .map(repair -> new RepairDto(repair.getId(), repair.getRepairType(), repair.getCost()))
                         .collect(Collectors.toList()) : List.of(),
                 car.getTotalRepairCost(),
                 car.getAttachments() != null ? car.getAttachments().stream()
-                        .map(this::convertToAttachmentDto)
+                        .map(attachment -> new AttachmentDto(attachment.getId(), attachment.getFileName(), attachment.getFilePath()))
                         .collect(Collectors.toList()) : List.of()
         );
     }
 
-
-    private RepairDto convertToRepairDto(Repair repair) {
-        return new RepairDto(
-                repair.getId(),
-                repair.getRepairType(),
-                repair.getCost(),
-                repair.getDate() != null ? repair.getDate().toString() : null
-        );
-    }
-
-
+    // Helper method to convert PdfAttachment entity to AttachmentDto
     private AttachmentDto convertToAttachmentDto(PdfAttachment attachment) {
         return new AttachmentDto(
                 attachment.getId(),
