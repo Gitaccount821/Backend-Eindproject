@@ -2,14 +2,19 @@ package nl.novi.eindprojectbackend.controllers;
 
 import nl.novi.eindprojectbackend.dtos.CarDto;
 import nl.novi.eindprojectbackend.dtos.AttachmentDto;
+import nl.novi.eindprojectbackend.dtos.RepairDto;
 import nl.novi.eindprojectbackend.models.Car;
 import nl.novi.eindprojectbackend.models.PdfAttachment;
+import nl.novi.eindprojectbackend.models.Repair;
 import nl.novi.eindprojectbackend.services.CarService;
+import nl.novi.eindprojectbackend.services.RepairService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -20,15 +25,35 @@ public class CarController {
     @Autowired
     private CarService carService;
 
-    // Endpoint nieuwe auto
+    @Autowired
+    private RepairService repairService;
+
+
     @PostMapping(produces = "application/json", consumes = "application/json")
-    public ResponseEntity<CarDto> addCar(@RequestBody Car car) {
+    public ResponseEntity<CarDto> addCar(@RequestBody CarDto carDto) {
+
+        if (carDto.getCarType() == null || carDto.getClientNumber() == null) {
+            return ResponseEntity.badRequest().build();  // Return 400 bij missing fields
+        }
+
+        Car car = new Car();
+        car.setCarType(carDto.getCarType());
+        car.setClientNumber(carDto.getClientNumber());
+
+        // Ensure not null
+        if (carDto.getRepairRequestDate() != null) {
+            car.setRepairRequestDate(carDto.getRepairRequestDate());
+        }
+
+
         Car savedCar = carService.addCar(car);
-        CarDto carDto = convertToCarDto(savedCar);
-        return ResponseEntity.ok(carDto);
+
+
+        CarDto responseDto = new CarDto(savedCar);
+        return ResponseEntity.ok(responseDto);
     }
 
-    // Endpoint get all (auto)
+
     @GetMapping(produces = "application/json")
     public ResponseEntity<List<CarDto>> getAllCars() {
         List<Car> cars = carService.getAllCars();
@@ -38,7 +63,6 @@ public class CarController {
         return ResponseEntity.ok(carDtos);
     }
 
-    // Endpoint auto via ID
     @GetMapping(value = "/{id}", produces = "application/json")
     public ResponseEntity<CarDto> getCarById(@PathVariable Long id) {
         return carService.getCarById(id)
@@ -46,7 +70,7 @@ public class CarController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // Endpoint update auto
+
     @PutMapping(value = "/{id}", produces = "application/json", consumes = "application/json")
     public ResponseEntity<CarDto> updateCar(@PathVariable Long id, @RequestBody Car car) {
         try {
@@ -58,14 +82,13 @@ public class CarController {
         }
     }
 
-    // Endpoint delete auto via ID
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCar(@PathVariable Long id) {
         carService.deleteCar(id);
         return ResponseEntity.noContent().build();
     }
 
-    // Endpoint add PDF
+    // Add PDF attachment
     @PostMapping(value = "/{id}/attachments", produces = "application/json", consumes = "application/json")
     public ResponseEntity<AttachmentDto> addPdfAttachment(
             @PathVariable Long id,
@@ -79,7 +102,7 @@ public class CarController {
         }
     }
 
-    // Endpoint get PDF
+
     @GetMapping(value = "/{id}/attachments", produces = "application/json")
     public ResponseEntity<List<AttachmentDto>> getAttachmentsByCarId(@PathVariable Long id) {
         try {
@@ -93,22 +116,68 @@ public class CarController {
         }
     }
 
-    // Helper method, convert Car naar CarDto
+
+    @PostMapping(value = "/{carId}/repairs", consumes = "application/json", produces = "application/json")
+    public ResponseEntity<CarDto> addRepairToCar(@PathVariable Long carId, @RequestBody RepairDto repairDto) {
+        try {
+
+
+            SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+            Date repairRequestDate = sdf.parse(repairDto.getRepairRequestDate());
+
+
+            Car car = carService.getCarById(carId).orElseThrow(() -> new IllegalArgumentException("Car not found"));
+
+
+            Repair repair = new Repair();
+            repair.setRepairType(repairDto.getRepairType());
+            repair.setCost(repairDto.getCost());
+            repair.setRepairRequestDate(repairRequestDate);
+            repair.setRepairDate(null);
+            repair.setCar(car);
+
+            carService.addRepairToCar(carId, repair);
+
+
+            Car updatedCar = carService.getCarById(carId).orElseThrow(() -> new IllegalArgumentException("Car not found"));
+
+
+            CarDto carDto = convertToCarDto(updatedCar);
+            return ResponseEntity.ok(carDto);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(null);
+        }
+    }
+
+    // Helper method
     private CarDto convertToCarDto(Car car) {
         return new CarDto(
                 car.getId(),
                 car.getCarType(),
                 car.getClientNumber(),
-                car.getRepairDate() != null ? car.getRepairDate().toString() : null,
-                car.getRepairs() != null ? car.getRepairs() : List.of(),
+                car.getRepairs() != null ? car.getRepairs().stream()
+                        .map(repair -> new RepairDto(
+                                repair.getId(),
+                                repair.getRepairType(),
+                                repair.getCost(),
+                                new SimpleDateFormat("dd-MM-yyyy").format(repair.getRepairRequestDate()),
+                                repair.getRepairDate() != null ? repair.getRepairDate().toString() : null
+                        ))
+                        .collect(Collectors.toList()) : List.of(),
                 car.getTotalRepairCost(),
                 car.getAttachments() != null ? car.getAttachments().stream()
-                        .map(this::convertToAttachmentDto)
-                        .collect(Collectors.toList()) : List.of()
+                        .map(attachment -> new AttachmentDto(
+                                attachment.getId(),
+                                attachment.getFileName(),
+                                attachment.getFilePath()
+                        ))
+                        .collect(Collectors.toList()) : List.of(),
+                car.getRepairRequestDate()
         );
     }
 
-    // Helper method, convert PdfAttachment naar AttachmentDto
+
+    // Helper method
     private AttachmentDto convertToAttachmentDto(PdfAttachment attachment) {
         return new AttachmentDto(
                 attachment.getId(),

@@ -1,6 +1,10 @@
 package nl.novi.eindprojectbackend.dtos;
 
 import nl.novi.eindprojectbackend.models.Car;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -8,18 +12,38 @@ public class CarDto {
     private Long id;
     private String carType;
     private String clientNumber;
-    private String repairDate;
-    private List<String> repairs;
+    private List<RepairDto> repairs;
     private Double totalRepairCost;
     private List<AttachmentDto> attachments;
+    private String repairRequestDate;
+
+
+    public CarDto() {
+
+    }
 
 
     public CarDto(Car car) {
         this.id = car.getId();
         this.carType = car.getCarType();
         this.clientNumber = car.getClientNumber();
-        this.repairDate = car.getRepairDate() != null ? car.getRepairDate().toString() : null; // Null-safe handling
-        this.repairs = car.getRepairs() != null ? car.getRepairs() : List.of();  // Null-safe handling
+        this.repairs = (car.getRepairs() != null)
+                ? car.getRepairs().stream()
+                .map(repair -> {
+
+                    String repairRequestDateStr = (repair.getRepairRequestDate() != null)
+                            ? new SimpleDateFormat("dd-MM-yyyy").format(repair.getRepairRequestDate())
+                            : null;
+                    return new RepairDto(
+                            repair.getId(),
+                            repair.getRepairType(),
+                            repair.getCost(),
+                            repairRequestDateStr,
+                            null
+                    );
+                })
+                .collect(Collectors.toList())
+                : List.of();
         this.totalRepairCost = car.getTotalRepairCost();
         this.attachments = car.getAttachments() != null
                 ? car.getAttachments().stream()
@@ -29,19 +53,22 @@ public class CarDto {
                         attachment.getFilePath()
                 ))
                 .collect(Collectors.toList())
-                : List.of();  // Null-safe handling
+                : List.of(); // Null-safe handling
+        this.repairRequestDate = car.getRepairRequestDate();
     }
 
 
-    public CarDto(Long id, String carType, String clientNumber, String repairDate,
-                  List<String> repairs, Double totalRepairCost, List<AttachmentDto> attachments) {
+    @JsonCreator
+    public CarDto(Long id, String carType, String clientNumber,
+                  List<RepairDto> repairs, Double totalRepairCost,
+                  List<AttachmentDto> attachments, String repairRequestDate) {
         this.id = id;
         this.carType = carType;
         this.clientNumber = clientNumber;
-        this.repairDate = repairDate;
         this.repairs = repairs;
         this.totalRepairCost = totalRepairCost;
         this.attachments = attachments;
+        this.repairRequestDate = repairRequestDate;
     }
 
     // Getters and setters
@@ -69,19 +96,11 @@ public class CarDto {
         this.clientNumber = clientNumber;
     }
 
-    public String getRepairDate() {
-        return repairDate;
-    }
-
-    public void setRepairDate(String repairDate) {
-        this.repairDate = repairDate;
-    }
-
-    public List<String> getRepairs() {
+    public List<RepairDto> getRepairs() {
         return repairs;
     }
 
-    public void setRepairs(List<String> repairs) {
+    public void setRepairs(List<RepairDto> repairs) {
         this.repairs = repairs;
     }
 
@@ -99,5 +118,13 @@ public class CarDto {
 
     public void setAttachments(List<AttachmentDto> attachments) {
         this.attachments = attachments;
+    }
+
+    public String getRepairRequestDate() {
+        return repairRequestDate;
+    }
+
+    public void setRepairRequestDate(String repairRequestDate) {
+        this.repairRequestDate = repairRequestDate;
     }
 }

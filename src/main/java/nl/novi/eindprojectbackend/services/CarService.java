@@ -2,13 +2,18 @@ package nl.novi.eindprojectbackend.services;
 
 import nl.novi.eindprojectbackend.models.Car;
 import nl.novi.eindprojectbackend.models.PdfAttachment;
+import nl.novi.eindprojectbackend.models.Repair;
 import nl.novi.eindprojectbackend.repositories.CarRepository;
 import nl.novi.eindprojectbackend.repositories.PdfAttachmentRepository;
+import nl.novi.eindprojectbackend.repositories.RepairRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+
+
+
 
 @Service
 public class CarService {
@@ -19,7 +24,10 @@ public class CarService {
     @Autowired
     private PdfAttachmentRepository pdfAttachmentRepository;
 
-    // nieuwe auto toevoegen
+    @Autowired
+    private RepairRepository repairRepository;
+
+    // Nieuwe auto toevoegen
     public Car addCar(Car car) {
         return carRepository.save(car);
     }
@@ -37,11 +45,17 @@ public class CarService {
     // Update auto details
     public Car updateCar(Long id, Car updatedCar) {
         return carRepository.findById(id).map(car -> {
+
             car.setCarType(updatedCar.getCarType());
             car.setClientNumber(updatedCar.getClientNumber());
-            car.setRepairDate(updatedCar.getRepairDate());
+
             car.setRepairs(updatedCar.getRepairs());
-            car.setTotalRepairCost(updatedCar.getTotalRepairCost());
+
+            double totalCost = updatedCar.getRepairs().stream()
+                    .mapToDouble(repair -> repair.getCost() != null ? repair.getCost() : 0.0) // Safeguard against null costs
+                    .sum();
+            car.setTotalRepairCost(totalCost);
+
             return carRepository.save(car);
         }).orElseThrow(() -> new IllegalArgumentException("Car not found"));
     }
@@ -51,7 +65,7 @@ public class CarService {
         carRepository.deleteById(id);
     }
 
-    // Add PDF attachement (niet zeker of dit gaat werken)
+    // Add PDF attachment
     public PdfAttachment addPdfAttachment(Long carId, PdfAttachment attachment) {
         Car car = carRepository.findById(carId)
                 .orElseThrow(() -> new IllegalArgumentException("Car not found"));
@@ -59,10 +73,44 @@ public class CarService {
         return pdfAttachmentRepository.save(attachment);
     }
 
-    // Get alle attachements
     public List<PdfAttachment> getAttachmentsByCarId(Long carId) {
         Car car = carRepository.findById(carId)
                 .orElseThrow(() -> new IllegalArgumentException("Car not found"));
         return car.getAttachments();
+    }
+
+    // Add repair to car
+    public Car addRepairToCar(Long carId, Repair repair) {
+        Car car = carRepository.findById(carId)
+                .orElseThrow(() -> new IllegalArgumentException("Car not found"));
+
+        repair.setCar(car);
+
+        car.getRepairs().add(repair);
+
+        double totalCost = car.getRepairs().stream()
+                .mapToDouble(r -> r.getCost() != null ? r.getCost() : 0.0)
+                .sum();
+
+        car.setTotalRepairCost(totalCost);
+
+        carRepository.save(car);
+        return car;
+    }
+
+    public List<Repair> getRepairsByCarId(Long carId) {
+        Car car = carRepository.findById(carId)
+                .orElseThrow(() -> new IllegalArgumentException("Car not found"));
+
+        return car.getRepairs();
+    }
+
+    // Getters and Setters
+    public RepairRepository getRepairRepository() {
+        return repairRepository;
+    }
+
+    public void setRepairRepository(RepairRepository repairRepository) {
+        this.repairRepository = repairRepository;
     }
 }
