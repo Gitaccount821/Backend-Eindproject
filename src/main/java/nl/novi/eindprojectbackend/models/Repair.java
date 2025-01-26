@@ -2,6 +2,7 @@ package nl.novi.eindprojectbackend.models;
 
 import jakarta.persistence.*;
 import java.util.Date;
+import java.util.List;
 
 @Entity
 public class Repair {
@@ -17,14 +18,16 @@ public class Repair {
     @JoinColumn(name = "car_id", nullable = false)
     private Car car;
 
+    @ManyToMany
+    private List<Part> parts;
+
+    private Double totalRepairCost;
+
     private Date repairRequestDate;
-
     private Date repairDate;
-
 
     public Repair() {
     }
-
 
     public Repair(String repairType, Double cost, Car car) {
         this.repairType = repairType;
@@ -32,7 +35,7 @@ public class Repair {
         this.car = car;
     }
 
-    // Getters and setters
+    // Getters and Setters
     public Long getId() {
         return id;
     }
@@ -63,6 +66,22 @@ public class Repair {
 
     public void setCar(Car car) {
         this.car = car;
+    }
+
+    public List<Part> getParts() {
+        return parts;
+    }
+
+    public void setParts(List<Part> parts) {
+        this.parts = parts;
+    }
+
+    public Double getTotalRepairCost() {
+        return totalRepairCost;
+    }
+
+    public void setTotalRepairCost(Double totalRepairCost) {
+        this.totalRepairCost = totalRepairCost;
     }
 
     public Date getRepairRequestDate() {

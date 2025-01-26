@@ -3,12 +3,16 @@ package nl.novi.eindprojectbackend.dtos;
 import java.util.List;
 
 public class RepairDto {
+
     private Long id;
     private String repairType;
     private Double cost;
     private String repairRequestDate;
     private String repairDate;
+    private List<Long> partIds;
 
+    public RepairDto() {
+    }
 
     public RepairDto(Long id, String repairType, Double cost, String repairRequestDate, String repairDate) {
         this.id = id;
@@ -16,6 +20,7 @@ public class RepairDto {
         this.cost = cost;
         this.repairRequestDate = repairRequestDate;
         this.repairDate = repairDate;
+        this.partIds = partIds;
     }
 
     // Getters and Setters
@@ -57,5 +62,13 @@ public class RepairDto {
 
     public void setRepairDate(String repairDate) {
         this.repairDate = repairDate;
+    }
+
+    public List<Long> getPartIds() {
+        return partIds;
+    }
+
+    public void setPartIds(List<Long> partIds) {
+        this.partIds = partIds;
     }
 }
