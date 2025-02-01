@@ -23,8 +23,9 @@ public class Car {
     @Column(nullable = false)
     private Double totalRepairCost = 0.0;
 
-    @OneToMany(mappedBy = "car", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PdfAttachment> attachments = new ArrayList<>();
+    @OneToOne(mappedBy = "car", cascade = CascadeType.ALL, orphanRemoval = true)
+    private PdfAttachment pdfAttachment;
+
 
     // Getters and setters
     public Long getId() {
@@ -75,17 +76,18 @@ public class Car {
         this.totalRepairCost = totalRepairCost;
     }
 
-    public List<PdfAttachment> getAttachments() {
-        return attachments;
-    }
-
-    public void setAttachments(List<PdfAttachment> attachments) {
-        this.attachments = attachments;
-    }
+    public PdfAttachment getPdfAttachment() { return pdfAttachment; }
+    public void setPdfAttachment(PdfAttachment pdfAttachment) { this.pdfAttachment = pdfAttachment; }
 
     public void updateTotalRepairCost() {
         this.totalRepairCost = repairs.stream()
-                .mapToDouble(Repair::getCost)
+                .mapToDouble(repair -> {
+                    double baseCost = (repair.getRepairType() != null) ? repair.getRepairType().getCost() : 0.0;
+                    double partsCost = repair.getParts() != null
+                            ? repair.getParts().stream().mapToDouble(Part::getPrice).sum()
+                            : 0.0;
+                    return baseCost + partsCost;
+                })
                 .sum();
     }
 }

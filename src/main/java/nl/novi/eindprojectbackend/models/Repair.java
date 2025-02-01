@@ -2,6 +2,7 @@ package nl.novi.eindprojectbackend.models;
 
 import jakarta.persistence.*;
 import java.util.Date;
+import java.util.List;
 
 @Entity
 public class Repair {
@@ -10,29 +11,31 @@ public class Repair {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String repairType;
-    private Double cost;
+    @ManyToOne
+    @JoinColumn(name = "repair_type_id", nullable = false)
+    private RepairType repairType;
 
     @ManyToOne
     @JoinColumn(name = "car_id", nullable = false)
     private Car car;
 
+    @ManyToMany
+    private List<Part> parts;
+
+    private Double totalRepairCost;
+
     private Date repairRequestDate;
-
     private Date repairDate;
-
 
     public Repair() {
     }
 
-
-    public Repair(String repairType, Double cost, Car car) {
+    public Repair(RepairType repairType, Car car) {
         this.repairType = repairType;
-        this.cost = cost;
         this.car = car;
     }
 
-    // Getters and setters
+    // Getters and Setters
     public Long getId() {
         return id;
     }
@@ -41,20 +44,12 @@ public class Repair {
         this.id = id;
     }
 
-    public String getRepairType() {
+    public RepairType getRepairType() {
         return repairType;
     }
 
-    public void setRepairType(String repairType) {
+    public void setRepairType(RepairType repairType) {
         this.repairType = repairType;
-    }
-
-    public Double getCost() {
-        return cost;
-    }
-
-    public void setCost(Double cost) {
-        this.cost = cost;
     }
 
     public Car getCar() {
@@ -63,6 +58,22 @@ public class Repair {
 
     public void setCar(Car car) {
         this.car = car;
+    }
+
+    public List<Part> getParts() {
+        return parts;
+    }
+
+    public void setParts(List<Part> parts) {
+        this.parts = parts;
+    }
+
+    public Double getTotalRepairCost() {
+        return totalRepairCost;
+    }
+
+    public void setTotalRepairCost(Double totalRepairCost) {
+        this.totalRepairCost = totalRepairCost;
     }
 
     public Date getRepairRequestDate() {

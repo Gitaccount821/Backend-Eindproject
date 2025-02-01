@@ -12,9 +12,6 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Optional;
 
-
-
-
 @Service
 public class CarService {
 
@@ -27,45 +24,40 @@ public class CarService {
     @Autowired
     private RepairRepository repairRepository;
 
-    // Nieuwe auto toevoegen
+
     public Car addCar(Car car) {
         return carRepository.save(car);
     }
 
-    // Get alle autos
+
     public List<Car> getAllCars() {
         return carRepository.findAll();
     }
 
-    // Get auto bij ID
+
     public Optional<Car> getCarById(Long id) {
         return carRepository.findById(id);
     }
 
-    // Update auto details
+
     public Car updateCar(Long id, Car updatedCar) {
         return carRepository.findById(id).map(car -> {
-
             car.setCarType(updatedCar.getCarType());
             car.setClientNumber(updatedCar.getClientNumber());
-
             car.setRepairs(updatedCar.getRepairs());
 
-            double totalCost = updatedCar.getRepairs().stream()
-                    .mapToDouble(repair -> repair.getCost() != null ? repair.getCost() : 0.0) // Safeguard against null costs
-                    .sum();
-            car.setTotalRepairCost(totalCost);
+            car.updateTotalRepairCost();
 
             return carRepository.save(car);
         }).orElseThrow(() -> new IllegalArgumentException("Car not found"));
     }
 
-    // Delete auto via ID
+
     public void deleteCar(Long id) {
         carRepository.deleteById(id);
     }
 
-    // Add PDF attachment
+
     public PdfAttachment addPdfAttachment(Long carId, PdfAttachment attachment) {
         Car car = carRepository.findById(carId)
                 .orElseThrow(() -> new IllegalArgumentException("Car not found"));
@@ -73,35 +65,36 @@ public class CarService {
         return pdfAttachmentRepository.save(attachment);
     }
 
-    public List<PdfAttachment> getAttachmentsByCarId(Long carId) {
+    public PdfAttachment getAttachmentByCarId(Long carId) {
         Car car = carRepository.findById(carId)
                 .orElseThrow(() -> new IllegalArgumentException("Car not found"));
-        return car.getAttachments();
+
+        if (car.getPdfAttachment() == null) {
+            throw new IllegalArgumentException("No attachment found for this car");
+        }
+
+        return car.getPdfAttachment();
     }
 
-    // Add repair to car
+
     public Car addRepairToCar(Long carId, Repair repair) {
         Car car = carRepository.findById(carId)
                 .orElseThrow(() -> new IllegalArgumentException("Car not found"));
 
         repair.setCar(car);
-
         car.getRepairs().add(repair);
 
-        double totalCost = car.getRepairs().stream()
-                .mapToDouble(r -> r.getCost() != null ? r.getCost() : 0.0)
-                .sum();
 
-        car.setTotalRepairCost(totalCost);
+        car.updateTotalRepairCost();
 
         carRepository.save(car);
         return car;
     }
 
+
     public List<Repair> getRepairsByCarId(Long carId) {
         Car car = carRepository.findById(carId)
                 .orElseThrow(() -> new IllegalArgumentException("Car not found"));
-
         return car.getRepairs();
     }
 
