@@ -32,10 +32,14 @@ public class PartController {
         return ResponseEntity.status(201).body(partService.addPart(part));
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<Part> updatePart(@PathVariable Long id, @RequestBody Part part) {
-        return ResponseEntity.ok(partService.updatePart(id, part));
+    @PutMapping
+    public ResponseEntity<Part> updatePart(@RequestBody Part part) {
+        if (part.getId() == null) {
+            return ResponseEntity.badRequest().build();
+        }
+        return ResponseEntity.ok(partService.updatePart(part));
     }
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePart(@PathVariable Long id) {

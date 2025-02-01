@@ -1,0 +1,88 @@
+package nl.novi.eindprojectbackend.services;
+
+import nl.novi.eindprojectbackend.models.Car;
+import nl.novi.eindprojectbackend.models.PdfAttachment;
+import nl.novi.eindprojectbackend.repositories.CarRepository;
+import nl.novi.eindprojectbackend.repositories.PdfAttachmentRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.nio.file.*;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+@Service
+public class PdfAttachmentService {
+
+    private static final String UPLOAD_DIR = "uploads/pdf/";
+
+    @Autowired
+    private PdfAttachmentRepository pdfAttachmentRepository;
+
+    @Autowired
+    private CarRepository carRepository;
+
+    public PdfAttachmentService() {
+        try {
+            Files.createDirectories(Paths.get(UPLOAD_DIR));
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to create upload directory!", e);
+        }
+    }
+
+
+    public PdfAttachment uploadPdf(Long carId, MultipartFile file) {
+        Car car = carRepository.findById(carId)
+                .orElseThrow(() -> new IllegalArgumentException("Car not found"));
+
+
+        String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
+        Path filePath = Paths.get(UPLOAD_DIR, fileName);
+
+        try {
+            Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to store file!", e);
+        }
+
+
+        PdfAttachment attachment = new PdfAttachment();
+        attachment.setFileName(file.getOriginalFilename());
+        attachment.setFilePath(filePath.toString());
+        attachment.setCar(car);
+        return pdfAttachmentRepository.save(attachment);
+    }
+
+
+    public PdfAttachment getAttachmentByCarId(Long carId) {
+        Car car = carRepository.findById(carId)
+                .orElseThrow(() -> new IllegalArgumentException("Car not found"));
+
+        if (car.getPdfAttachment() == null) {
+            throw new IllegalArgumentException("No attachment found for this car");
+        }
+
+        return car.getPdfAttachment();
+    }
+
+
+
+
+
+    public void deleteAttachment(Long id) {
+        PdfAttachment attachment = pdfAttachmentRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Attachment not found"));
+
+        try {
+            Files.deleteIfExists(Paths.get(attachment.getFilePath()));
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to delete file!", e);
+        }
+
+        pdfAttachmentRepository.deleteById(id);
+    }
+
+}

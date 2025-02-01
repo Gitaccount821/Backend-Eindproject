@@ -3,17 +3,13 @@ package nl.novi.eindprojectbackend.controllers;
 import nl.novi.eindprojectbackend.dtos.CarDto;
 import nl.novi.eindprojectbackend.dtos.AttachmentDto;
 import nl.novi.eindprojectbackend.dtos.RepairDto;
-import nl.novi.eindprojectbackend.models.Car;
-import nl.novi.eindprojectbackend.models.PdfAttachment;
-import nl.novi.eindprojectbackend.models.Repair;
-import nl.novi.eindprojectbackend.models.Part;
-import nl.novi.eindprojectbackend.services.CarService;
-import nl.novi.eindprojectbackend.services.RepairService;
-import nl.novi.eindprojectbackend.services.PartService;
+import nl.novi.eindprojectbackend.models.*;
+import nl.novi.eindprojectbackend.services.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -31,37 +27,38 @@ public class CarController {
     private RepairService repairService;
 
     @Autowired
-    private PartService partService; // Added service to handle parts
+    private PartService partService;
+
+    @Autowired
+    private RepairTypeService repairTypeService;
+
+    @Autowired
+    private PdfAttachmentService pdfAttachmentService;
 
 
     @PostMapping(produces = "application/json", consumes = "application/json")
     public ResponseEntity<CarDto> addCar(@RequestBody CarDto carDto) {
         if (carDto.getCarType() == null || carDto.getClientNumber() == null) {
-            return ResponseEntity.badRequest().build();  // Return 400 if missing fields
+            return ResponseEntity.badRequest().build();
         }
 
         Car car = new Car();
         car.setCarType(carDto.getCarType());
         car.setClientNumber(carDto.getClientNumber());
 
-        // Ensure not null
         if (carDto.getRepairRequestDate() != null) {
             car.setRepairRequestDate(carDto.getRepairRequestDate());
         }
 
         Car savedCar = carService.addCar(car);
-
-        CarDto responseDto = new CarDto(savedCar);
-        return ResponseEntity.ok(responseDto);
+        return ResponseEntity.ok(new CarDto(savedCar));
     }
 
 
     @GetMapping(produces = "application/json")
     public ResponseEntity<List<CarDto>> getAllCars() {
         List<Car> cars = carService.getAllCars();
-        List<CarDto> carDtos = cars.stream()
-                .map(this::convertToCarDto)
-                .collect(Collectors.toList());
+        List<CarDto> carDtos = cars.stream().map(this::convertToCarDto).collect(Collectors.toList());
         return ResponseEntity.ok(carDtos);
     }
 
@@ -74,38 +71,29 @@ public class CarController {
     }
 
 
-    @PutMapping(value = "/{id}", produces = "application/json", consumes = "application/json")
-    public ResponseEntity<CarDto> updateCar(@PathVariable Long id, @RequestBody Car car) {
-        try {
-            Car updatedCar = carService.updateCar(id, car);
-            CarDto carDto = convertToCarDto(updatedCar);
-            return ResponseEntity.ok(carDto);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCar(@PathVariable Long id) {
-        carService.deleteCar(id);
-        return ResponseEntity.noContent().build();
-    }
-
     @PostMapping(value = "/{carId}/repairs", consumes = "application/json", produces = "application/json")
     public ResponseEntity<CarDto> addRepairToCar(@PathVariable Long carId, @RequestBody RepairDto repairDto) {
         try {
             SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
             Date repairRequestDate = sdf.parse(repairDto.getRepairRequestDate());
+            Date repairDate = repairDto.getRepairDate() != null ? sdf.parse(repairDto.getRepairDate()) : null;
+
 
             Car car = carService.getCarById(carId).orElseThrow(() -> new IllegalArgumentException("Car not found"));
 
+
+            RepairType repairType = repairTypeService.getRepairTypeById(repairDto.getRepairTypeId())
+                    .orElseThrow(() -> new IllegalArgumentException("Repair type not found"));
+
+
             Repair repair = new Repair();
-            repair.setRepairType(repairDto.getRepairType());
-            repair.setCost(repairDto.getCost());
+            repair.setRepairType(repairType);
             repair.setRepairRequestDate(repairRequestDate);
-            repair.setRepairDate(null);
+            repair.setRepairDate(repairDate);
             repair.setCar(car);
+
+            double totalCost = repairType.getCost();
+
 
             if (repairDto.getPartIds() != null && !repairDto.getPartIds().isEmpty()) {
                 List<Part> parts = repairDto.getPartIds().stream()
@@ -115,56 +103,73 @@ public class CarController {
 
                 repair.setParts(parts);
 
-                // total cost
-                double totalCost = repair.getCost();
                 for (Part part : parts) {
                     totalCost += part.getPrice();
-                    part.setStock(part.getStock() - 1); // Decrease stock by 1
-                    partService.updatePart(part.getId(), part); // Save the updated part stock
+                    part.setStock(part.getStock() - 1);
+                    partService.updatePart(part);
                 }
-                repair.setTotalRepairCost(totalCost);
             }
 
-            // Save the repair
-            carService.addRepairToCar(carId, repair);
+            repair.setTotalRepairCost(totalCost);
 
-            // Return updated car info
-            Car updatedCar = carService.getCarById(carId).orElseThrow(() -> new IllegalArgumentException("Car not found"));
-            CarDto carDto = convertToCarDto(updatedCar);
-            return ResponseEntity.ok(carDto);
+
+            repairService.addRepair(repair);
+
+
+            car.getRepairs().add(repair);
+            car.updateTotalRepairCost();
+            carService.addCar(car);
+
+            return ResponseEntity.ok(new CarDto(car));
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.badRequest().body(null);
         }
     }
 
-    // Add PDF attachment
-    @PostMapping(value = "/{id}/attachments", produces = "application/json", consumes = "application/json")
-    public ResponseEntity<AttachmentDto> addPdfAttachment(
-            @PathVariable Long id,
-            @RequestBody PdfAttachment attachment) {
+
+    @PostMapping(value = "/{carId}/attachments", consumes = "multipart/form-data")
+    public ResponseEntity<AttachmentDto> uploadPdfAttachment(@PathVariable Long carId,
+                                                             @RequestParam("file") MultipartFile file) {
         try {
-            PdfAttachment savedAttachment = carService.addPdfAttachment(id, attachment);
-            AttachmentDto attachmentDto = convertToAttachmentDto(savedAttachment);
+            PdfAttachment savedAttachment = pdfAttachmentService.uploadPdf(carId, file);
+            return ResponseEntity.ok(new AttachmentDto(
+                    savedAttachment.getId(),
+                    savedAttachment.getFileName(),
+                    savedAttachment.getFilePath()
+            ));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @GetMapping(value = "/{carId}/attachment", produces = "application/json")
+    public ResponseEntity<AttachmentDto> getAttachmentByCarId(@PathVariable Long carId) {
+        try {
+            PdfAttachment attachment = pdfAttachmentService.getAttachmentByCarId(carId);
+            AttachmentDto attachmentDto = new AttachmentDto(
+                    attachment.getId(),
+                    attachment.getFileName(),
+                    attachment.getFilePath()
+            );
             return ResponseEntity.ok(attachmentDto);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(null);
-        }
-    }
-
-    @GetMapping(value = "/{id}/attachments", produces = "application/json")
-    public ResponseEntity<List<AttachmentDto>> getAttachmentsByCarId(@PathVariable Long id) {
-        try {
-            List<PdfAttachment> attachments = carService.getAttachmentsByCarId(id);
-            List<AttachmentDto> attachmentDtos = attachments.stream()
-                    .map(this::convertToAttachmentDto)
-                    .collect(Collectors.toList());
-            return ResponseEntity.ok(attachmentDtos);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
         }
     }
 
-    // Helper methods
+
+
+    @DeleteMapping("/{carId}/attachments/{attachmentId}")
+    public ResponseEntity<Void> deleteAttachment(@PathVariable Long carId, @PathVariable Long attachmentId) {
+        try {
+            pdfAttachmentService.deleteAttachment(attachmentId);
+            return ResponseEntity.noContent().build();
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
     private CarDto convertToCarDto(Car car) {
         return new CarDto(
                 car.getId(),
@@ -173,29 +178,25 @@ public class CarController {
                 car.getRepairs() != null ? car.getRepairs().stream()
                         .map(repair -> new RepairDto(
                                 repair.getId(),
-                                repair.getRepairType(),
-                                repair.getCost(),
+                                repair.getRepairType().getId(),
+                                repair.getTotalRepairCost(),
                                 new SimpleDateFormat("dd-MM-yyyy").format(repair.getRepairRequestDate()),
-                                repair.getRepairDate() != null ? new SimpleDateFormat("dd-MM-yyyy").format(repair.getRepairDate()) : null
+                                repair.getRepairDate() != null ? new SimpleDateFormat("dd-MM-yyyy").format(repair.getRepairDate()) : null,
+                                repair.getParts() != null ? repair.getParts().stream().map(Part::getId).collect(Collectors.toList()) : null
                         ))
                         .collect(Collectors.toList()) : List.of(),
                 car.getTotalRepairCost(),
-                car.getAttachments() != null ? car.getAttachments().stream()
-                        .map(attachment -> new AttachmentDto(
-                                attachment.getId(),
-                                attachment.getFileName(),
-                                attachment.getFilePath()
-                        ))
-                        .collect(Collectors.toList()) : List.of(),
-                car.getRepairRequestDate()
-        );
-    }
 
-    private AttachmentDto convertToAttachmentDto(PdfAttachment attachment) {
-        return new AttachmentDto(
-                attachment.getId(),
-                attachment.getFileName(),
-                attachment.getFilePath()
+
+                car.getPdfAttachment() != null
+                        ? List.of(new AttachmentDto(
+                        car.getPdfAttachment().getId(),
+                        car.getPdfAttachment().getFileName(),
+                        car.getPdfAttachment().getFilePath()
+                ))
+                        : List.of(),
+
+                car.getRepairRequestDate()
         );
     }
 }

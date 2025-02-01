@@ -11,8 +11,9 @@ public class Repair {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String repairType;
-    private Double cost;
+    @ManyToOne
+    @JoinColumn(name = "repair_type_id", nullable = false)
+    private RepairType repairType;
 
     @ManyToOne
     @JoinColumn(name = "car_id", nullable = false)
@@ -29,9 +30,8 @@ public class Repair {
     public Repair() {
     }
 
-    public Repair(String repairType, Double cost, Car car) {
+    public Repair(RepairType repairType, Car car) {
         this.repairType = repairType;
-        this.cost = cost;
         this.car = car;
     }
 
@@ -44,20 +44,12 @@ public class Repair {
         this.id = id;
     }
 
-    public String getRepairType() {
+    public RepairType getRepairType() {
         return repairType;
     }
 
-    public void setRepairType(String repairType) {
+    public void setRepairType(RepairType repairType) {
         this.repairType = repairType;
-    }
-
-    public Double getCost() {
-        return cost;
-    }
-
-    public void setCost(Double cost) {
-        this.cost = cost;
     }
 
     public Car getCar() {

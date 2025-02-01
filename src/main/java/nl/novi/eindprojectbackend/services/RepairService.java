@@ -1,5 +1,4 @@
 package nl.novi.eindprojectbackend.services;
-
 import nl.novi.eindprojectbackend.models.Car;
 import nl.novi.eindprojectbackend.models.Repair;
 import nl.novi.eindprojectbackend.repositories.CarRepository;
@@ -20,22 +19,11 @@ public class RepairService {
     private RepairRepository repairRepository;
 
 
-    public Repair addRepairToCar(Long carId, String repairType, Double cost, Date repairRequestDate) {
-
-
-        Car car = carRepository.findById(carId)
-                .orElseThrow(() -> new IllegalArgumentException("Car not found"));
-
-
-        Repair repair = new Repair(repairType, cost, car);
-        repair.setRepairRequestDate(repairRequestDate);
-
-
-        car.getRepairs().add(repair);
-
-        repairRepository.save(repair);
-        carRepository.save(car);
-
-        return repair;
+    public Repair addRepair(Repair repair) {
+        if (repair.getCar() == null) {
+            throw new IllegalArgumentException("Repair must be associated with a car.");
+        }
+        return repairRepository.save(repair);
     }
+
 }

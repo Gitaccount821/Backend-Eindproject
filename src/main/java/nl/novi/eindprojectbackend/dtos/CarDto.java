@@ -1,8 +1,8 @@
 package nl.novi.eindprojectbackend.dtos;
+import nl.novi.eindprojectbackend.models.Part;
 
 import nl.novi.eindprojectbackend.models.Car;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.text.SimpleDateFormat;
 import java.util.List;
@@ -17,12 +17,6 @@ public class CarDto {
     private List<AttachmentDto> attachments;
     private String repairRequestDate;
 
-
-    public CarDto() {
-
-    }
-
-
     public CarDto(Car car) {
         this.id = car.getId();
         this.carType = car.getCarType();
@@ -30,30 +24,41 @@ public class CarDto {
         this.repairs = (car.getRepairs() != null)
                 ? car.getRepairs().stream()
                 .map(repair -> {
-
                     String repairRequestDateStr = (repair.getRepairRequestDate() != null)
                             ? new SimpleDateFormat("dd-MM-yyyy").format(repair.getRepairRequestDate())
                             : null;
+
+                    Double cost = repair.getRepairType() != null
+                            ? repair.getRepairType().getCost()
+                            : 0.0;
+
+                    List<Long> partIds = repair.getParts() != null
+                            ? repair.getParts().stream().map(Part::getId).collect(Collectors.toList())
+                            : null;
+
                     return new RepairDto(
                             repair.getId(),
-                            repair.getRepairType(),
-                            repair.getCost(),
+                            repair.getRepairType() != null ? repair.getRepairType().getId() : null,
+                            cost,
                             repairRequestDateStr,
-                            null
+                            repair.getRepairDate() != null ? new SimpleDateFormat("dd-MM-yyyy").format(repair.getRepairDate()) : null,
+                            partIds
                     );
                 })
                 .collect(Collectors.toList())
                 : List.of();
+
         this.totalRepairCost = car.getTotalRepairCost();
-        this.attachments = car.getAttachments() != null
-                ? car.getAttachments().stream()
-                .map(attachment -> new AttachmentDto(
-                        attachment.getId(),
-                        attachment.getFileName(),
-                        attachment.getFilePath()
-                ))
-                .collect(Collectors.toList())
-                : List.of(); // Null-safe handling
+
+
+        this.attachments = (car.getPdfAttachment() != null)
+                ? List.of(new AttachmentDto(
+                car.getPdfAttachment().getId(),
+                car.getPdfAttachment().getFileName(),
+                car.getPdfAttachment().getFilePath()
+        ))
+                : List.of();
+
         this.repairRequestDate = car.getRepairRequestDate();
     }
 

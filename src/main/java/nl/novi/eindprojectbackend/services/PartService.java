@@ -26,10 +26,13 @@ public class PartService {
         return partRepository.findById(id);
     }
 
-    public Part updatePart(Long id, Part part) {
-        part.setId(id);
+    public Part updatePart(Part part) {
+        if (part.getId() == null || !partRepository.existsById(part.getId())) {
+            throw new IllegalArgumentException("Part not found for update.");
+        }
         return partRepository.save(part);
     }
+
 
     public void deletePart(Long id) {
         if (partRepository.existsById(id)) {
