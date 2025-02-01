@@ -32,8 +32,6 @@ public class CarController {
     @Autowired
     private RepairTypeService repairTypeService;
 
-    @Autowired
-    private PdfAttachmentService pdfAttachmentService;
 
 
     @PostMapping(produces = "application/json", consumes = "application/json")
@@ -124,49 +122,6 @@ public class CarController {
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.badRequest().body(null);
-        }
-    }
-
-
-    @PostMapping(value = "/{carId}/attachments", consumes = "multipart/form-data")
-    public ResponseEntity<AttachmentDto> uploadPdfAttachment(@PathVariable Long carId,
-                                                             @RequestParam("file") MultipartFile file) {
-        try {
-            PdfAttachment savedAttachment = pdfAttachmentService.uploadPdf(carId, file);
-            return ResponseEntity.ok(new AttachmentDto(
-                    savedAttachment.getId(),
-                    savedAttachment.getFileName(),
-                    savedAttachment.getFilePath()
-            ));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
-        }
-    }
-
-    @GetMapping(value = "/{carId}/attachment", produces = "application/json")
-    public ResponseEntity<AttachmentDto> getAttachmentByCarId(@PathVariable Long carId) {
-        try {
-            PdfAttachment attachment = pdfAttachmentService.getAttachmentByCarId(carId);
-            AttachmentDto attachmentDto = new AttachmentDto(
-                    attachment.getId(),
-                    attachment.getFileName(),
-                    attachment.getFilePath()
-            );
-            return ResponseEntity.ok(attachmentDto);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-
-
-    @DeleteMapping("/{carId}/attachments/{attachmentId}")
-    public ResponseEntity<Void> deleteAttachment(@PathVariable Long carId, @PathVariable Long attachmentId) {
-        try {
-            pdfAttachmentService.deleteAttachment(attachmentId);
-            return ResponseEntity.noContent().build();
-        } catch (Exception e) {
-            return ResponseEntity.notFound().build();
         }
     }
 

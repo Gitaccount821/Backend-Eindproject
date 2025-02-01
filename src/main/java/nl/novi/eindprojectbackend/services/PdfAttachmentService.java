@@ -57,15 +57,8 @@ public class PdfAttachmentService {
     }
 
 
-    public PdfAttachment getAttachmentByCarId(Long carId) {
-        Car car = carRepository.findById(carId)
-                .orElseThrow(() -> new IllegalArgumentException("Car not found"));
-
-        if (car.getPdfAttachment() == null) {
-            throw new IllegalArgumentException("No attachment found for this car");
-        }
-
-        return car.getPdfAttachment();
+    public Optional<PdfAttachment> getAttachmentByCarId(Long carId) {
+        return pdfAttachmentRepository.findByCarId(carId);
     }
 
 
