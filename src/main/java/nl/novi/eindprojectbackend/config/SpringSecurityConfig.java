@@ -11,7 +11,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -53,11 +52,39 @@ public class SpringSecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .cors(cors -> {})
                 .authorizeHttpRequests(auth -> auth
+
+
                         .requestMatchers(HttpMethod.POST, "/authenticate").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users/register").permitAll()
+
+
                         .requestMatchers("/api/cars/**").hasRole("MONTEUR")
+                        .requestMatchers("/api/repair-types/**").hasRole("MONTEUR")
+                        .requestMatchers("/api/cars/{carId}/repairs").hasRole("MONTEUR")
+                        .requestMatchers("/api/repairs/**").hasRole("MONTEUR")
+                        .requestMatchers("/api/pdfs/download/**").hasRole("MONTEUR")
+
+                        // Monteur temporary (To remove later)
                         .requestMatchers("/api/parts/**").hasRole("MONTEUR")
-                        .requestMatchers("/api/pdfs/**").hasRole("MONTEUR")
+                        .requestMatchers("/api/pdfs/upload/**").hasRole("MONTEUR")
+
+
+                        .requestMatchers(HttpMethod.GET, "/api/cars/{carId}").hasRole("KLANT")
+                        .requestMatchers(HttpMethod.GET, "/api/cars/{carId}/repairs").hasRole("KLANT")
+                        .requestMatchers(HttpMethod.POST, "/api/pdfs/**").hasRole("KLANT")
+                        .requestMatchers(HttpMethod.GET, "/api/pdfs/**").hasRole("KLANT")
+                        .requestMatchers(HttpMethod.DELETE, "/api/pdfs/**").hasRole("KLANT")
+
+
+                        .requestMatchers(HttpMethod.GET, "/api/parts/**").hasRole("MEDEWERKER")
+                        .requestMatchers(HttpMethod.POST, "/api/parts/**").hasRole("MEDEWERKER")
+                        .requestMatchers(HttpMethod.PUT, "/api/parts/**").hasRole("MEDEWERKER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/parts/**").hasRole("MEDEWERKER")
+                        .requestMatchers(HttpMethod.GET, "/api/repair-types/**").hasRole("MEDEWERKER")
+                        .requestMatchers(HttpMethod.POST, "/api/repair-types/**").hasRole("MEDEWERKER")
+                        .requestMatchers(HttpMethod.PUT, "/api/repair-types/**").hasRole("MEDEWERKER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/repair-types/**").hasRole("MEDEWERKER")
+
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex
