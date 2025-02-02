@@ -13,7 +13,9 @@ public class Car {
 
     private String carType;
 
-    private String clientNumber;
+    @ManyToOne
+    @JoinColumn(name = "owner_username", referencedColumnName = "username", nullable = false)
+    private User owner;
 
     private String repairRequestDate;
 
@@ -27,54 +29,23 @@ public class Car {
     private PdfAttachment pdfAttachment;
 
 
-    // Getters and setters
-    public Long getId() {
-        return id;
-    }
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
 
-    public void setId(Long id) {
-        this.id = id;
-    }
+    public String getCarType() { return carType; }
+    public void setCarType(String carType) { this.carType = carType; }
 
-    public String getCarType() {
-        return carType;
-    }
+    public User getOwner() { return owner; }
+    public void setOwner(User owner) { this.owner = owner; }
 
-    public void setCarType(String carType) {
-        this.carType = carType;
-    }
+    public String getRepairRequestDate() { return repairRequestDate; }
+    public void setRepairRequestDate(String repairRequestDate) { this.repairRequestDate = repairRequestDate; }
 
-    public String getClientNumber() {
-        return clientNumber;
-    }
+    public List<Repair> getRepairs() { return repairs; }
+    public void setRepairs(List<Repair> repairs) { this.repairs = repairs; }
 
-    public void setClientNumber(String clientNumber) {
-        this.clientNumber = clientNumber;
-    }
-
-    public String getRepairRequestDate() {
-        return repairRequestDate;
-    }
-
-    public void setRepairRequestDate(String repairRequestDate) {
-        this.repairRequestDate = repairRequestDate;
-    }
-
-    public List<Repair> getRepairs() {
-        return repairs;
-    }
-
-    public void setRepairs(List<Repair> repairs) {
-        this.repairs = repairs;
-    }
-
-    public Double getTotalRepairCost() {
-        return totalRepairCost;
-    }
-
-    public void setTotalRepairCost(Double totalRepairCost) {
-        this.totalRepairCost = totalRepairCost;
-    }
+    public Double getTotalRepairCost() { return totalRepairCost; }
+    public void setTotalRepairCost(Double totalRepairCost) { this.totalRepairCost = totalRepairCost; }
 
     public PdfAttachment getPdfAttachment() { return pdfAttachment; }
     public void setPdfAttachment(PdfAttachment pdfAttachment) { this.pdfAttachment = pdfAttachment; }

@@ -1,18 +1,17 @@
 package nl.novi.eindprojectbackend.controllers;
 
 import nl.novi.eindprojectbackend.dtos.CarDto;
-import nl.novi.eindprojectbackend.dtos.AttachmentDto;
 import nl.novi.eindprojectbackend.dtos.RepairDto;
 import nl.novi.eindprojectbackend.models.*;
 import nl.novi.eindprojectbackend.services.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -32,126 +31,90 @@ public class CarController {
     @Autowired
     private RepairTypeService repairTypeService;
 
+    @Autowired
+    private CustomUserDetailsService userDetailsService;
 
+    /**
+     * ✅ Monteur & Medewerker can add cars.
+     * ❌ Klant cannot create cars (returns 403 Forbidden).
+     */
 
     @PostMapping(produces = "application/json", consumes = "application/json")
-    public ResponseEntity<CarDto> addCar(@RequestBody CarDto carDto) {
-        if (carDto.getCarType() == null || carDto.getClientNumber() == null) {
-            return ResponseEntity.badRequest().build();
+    public ResponseEntity<?> addCar(@RequestBody CarDto carDto) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        System.out.println("🔍 Request received to add car. User: " + auth.getName());
+        auth.getAuthorities().forEach(role -> System.out.println("✅ User Role: " + role.getAuthority()));
+
+        if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_KLANT"))) {
+            System.out.println("❌ Denied: Klant cannot create cars.");
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Klant cannot create cars.");
+        }
+
+        System.out.println("🔍 Looking up owner: " + carDto.getOwnerUsername());
+
+        User owner;
+        try {
+            owner = userDetailsService.findUserByUsername(carDto.getOwnerUsername());
+            System.out.println("✅ Found owner: " + owner.getUsername());
+        } catch (Exception e) {
+            System.out.println("❌ Error: " + e.getMessage());
+            return ResponseEntity.badRequest().body("Invalid ownerUsername: No such user exists.");
         }
 
         Car car = new Car();
         car.setCarType(carDto.getCarType());
-        car.setClientNumber(carDto.getClientNumber());
+        car.setOwner(owner);
+        car.setRepairRequestDate(carDto.getRepairRequestDate());
 
-        if (carDto.getRepairRequestDate() != null) {
-            car.setRepairRequestDate(carDto.getRepairRequestDate());
-        }
+        System.out.println("✅ Saving car: " + car.getCarType() + " for owner: " + car.getOwner().getUsername());
 
-        Car savedCar = carService.addCar(car);
+        Car savedCar = carService.addCar(car, carDto.getOwnerUsername());
+
         return ResponseEntity.ok(new CarDto(savedCar));
     }
 
 
+
+
+    /**
+     * ✅ Monteur & Medewerker can view all cars.
+     * ❌ Klant cannot access all cars (returns 403 Forbidden).
+     */
     @GetMapping(produces = "application/json")
-    public ResponseEntity<List<CarDto>> getAllCars() {
+    public ResponseEntity<?> getAllCars() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_KLANT"))) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Klant can only access their own cars.");
+        }
+
         List<Car> cars = carService.getAllCars();
-        List<CarDto> carDtos = cars.stream().map(this::convertToCarDto).collect(Collectors.toList());
+        List<CarDto> carDtos = cars.stream().map(CarDto::new).collect(Collectors.toList());
         return ResponseEntity.ok(carDtos);
     }
 
-
+    /**
+     * ✅ Monteur & Medewerker can see any car.
+     * ✅ Klant can only see **their** car.
+     * ❌ Klant trying to see **other cars** → 403 Forbidden.
+     */
     @GetMapping(value = "/{id}", produces = "application/json")
-    public ResponseEntity<CarDto> getCarById(@PathVariable Long id) {
-        return carService.getCarById(id)
-                .map(car -> ResponseEntity.ok(convertToCarDto(car)))
-                .orElse(ResponseEntity.notFound().build());
-    }
+    public ResponseEntity<?> getCarById(@PathVariable Long id) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        Car car = carService.getCarById(id).orElse(null);
 
-
-    @PostMapping(value = "/{carId}/repairs", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<CarDto> addRepairToCar(@PathVariable Long carId, @RequestBody RepairDto repairDto) {
-        try {
-            SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
-            Date repairRequestDate = sdf.parse(repairDto.getRepairRequestDate());
-            Date repairDate = repairDto.getRepairDate() != null ? sdf.parse(repairDto.getRepairDate()) : null;
-
-
-            Car car = carService.getCarById(carId).orElseThrow(() -> new IllegalArgumentException("Car not found"));
-
-
-            RepairType repairType = repairTypeService.getRepairTypeById(repairDto.getRepairTypeId())
-                    .orElseThrow(() -> new IllegalArgumentException("Repair type not found"));
-
-
-            Repair repair = new Repair();
-            repair.setRepairType(repairType);
-            repair.setRepairRequestDate(repairRequestDate);
-            repair.setRepairDate(repairDate);
-            repair.setCar(car);
-
-            double totalCost = repairType.getCost();
-
-
-            if (repairDto.getPartIds() != null && !repairDto.getPartIds().isEmpty()) {
-                List<Part> parts = repairDto.getPartIds().stream()
-                        .map(partId -> partService.getPartById(partId)
-                                .orElseThrow(() -> new IllegalArgumentException("Part not found for ID: " + partId)))
-                        .collect(Collectors.toList());
-
-                repair.setParts(parts);
-
-                for (Part part : parts) {
-                    totalCost += part.getPrice();
-                    part.setStock(part.getStock() - 1);
-                    partService.updatePart(part);
-                }
-            }
-
-            repair.setTotalRepairCost(totalCost);
-
-
-            repairService.addRepair(repair);
-
-
-            car.getRepairs().add(repair);
-            car.updateTotalRepairCost();
-            carService.addCar(car);
-
-            return ResponseEntity.ok(new CarDto(car));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.badRequest().body(null);
+        if (car == null) {
+            return ResponseEntity.notFound().build();
         }
-    }
 
-    private CarDto convertToCarDto(Car car) {
-        return new CarDto(
-                car.getId(),
-                car.getCarType(),
-                car.getClientNumber(),
-                car.getRepairs() != null ? car.getRepairs().stream()
-                        .map(repair -> new RepairDto(
-                                repair.getId(),
-                                repair.getRepairType().getId(),
-                                repair.getTotalRepairCost(),
-                                new SimpleDateFormat("dd-MM-yyyy").format(repair.getRepairRequestDate()),
-                                repair.getRepairDate() != null ? new SimpleDateFormat("dd-MM-yyyy").format(repair.getRepairDate()) : null,
-                                repair.getParts() != null ? repair.getParts().stream().map(Part::getId).collect(Collectors.toList()) : null
-                        ))
-                        .collect(Collectors.toList()) : List.of(),
-                car.getTotalRepairCost(),
+        if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_KLANT"))) {
+            String username = auth.getName();
+            if (!car.getOwner().getUsername().equals(username)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can only access your own car.");
+            }
+        }
 
-
-                car.getPdfAttachment() != null
-                        ? List.of(new AttachmentDto(
-                        car.getPdfAttachment().getId(),
-                        car.getPdfAttachment().getFileName(),
-                        car.getPdfAttachment().getFilePath()
-                ))
-                        : List.of(),
-
-                car.getRepairRequestDate()
-        );
+        return ResponseEntity.ok(new CarDto(car));
     }
 }
