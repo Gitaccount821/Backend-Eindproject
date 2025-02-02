@@ -4,6 +4,7 @@ import nl.novi.eindprojectbackend.models.User;
 import nl.novi.eindprojectbackend.models.Authority;
 import nl.novi.eindprojectbackend.repositories.UserRepository;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -40,12 +41,17 @@ public class UserController {
 
     @PostMapping("/create-user")
     public ResponseEntity<String> createUser(@RequestBody User user, @RequestParam String role) {
+
+        if (!SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_MEDEWERKER"))) {
+            return ResponseEntity.status(403).body("Only Medewerkers can create new users!");
+        }
+
         if (userRepository.existsById(user.getUsername())) {
             return ResponseEntity.badRequest().body("Username already exists!");
         }
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
-
 
         String assignedRole;
         switch (role.toUpperCase()) {
@@ -60,8 +66,8 @@ public class UserController {
         }
 
         user.addAuthority(new Authority(user.getUsername(), assignedRole));
-
         userRepository.save(user);
+
         return ResponseEntity.ok("User registered successfully with role: " + assignedRole);
     }
 }

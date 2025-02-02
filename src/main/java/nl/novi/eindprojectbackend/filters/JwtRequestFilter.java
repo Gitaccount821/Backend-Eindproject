@@ -51,7 +51,6 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
                     List<String> roles = jwtTokenUtil.extractRoles(jwt);
 
-
                     List<GrantedAuthority> authorities = roles.stream()
                             .map(SimpleGrantedAuthority::new)
                             .collect(Collectors.toList());
@@ -59,9 +58,10 @@ public class JwtRequestFilter extends OncePerRequestFilter {
                     UsernamePasswordAuthenticationToken authenticationToken =
                             new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
                     authenticationToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+
                     SecurityContextHolder.getContext().setAuthentication(authenticationToken);
-                }
-                else {
+                } else {
                     SecurityContextHolder.clearContext();
                     response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid or expired token.");
                     return;
@@ -75,4 +75,5 @@ public class JwtRequestFilter extends OncePerRequestFilter {
 
         chain.doFilter(request, response);
     }
+
 }

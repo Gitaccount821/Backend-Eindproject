@@ -58,22 +58,27 @@ public class SpringSecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/users/register").permitAll()
 
 
-                        .requestMatchers("/api/cars/**").hasRole("MONTEUR")
+                        .requestMatchers(HttpMethod.POST, "/api/users/create-user").hasRole("MEDEWERKER")
+
+
+
                         .requestMatchers("/api/repair-types/**").hasRole("MONTEUR")
                         .requestMatchers("/api/cars/{carId}/repairs").hasRole("MONTEUR")
                         .requestMatchers("/api/repairs/**").hasRole("MONTEUR")
-                        .requestMatchers("/api/pdfs/download/**").hasRole("MONTEUR")
+
+                        .requestMatchers("/api/pdfs/download/**").hasAnyRole("MONTEUR", "KLANT")
+                        .requestMatchers(HttpMethod.POST, "/api/pdfs/**").hasRole("KLANT")
+                        .requestMatchers(HttpMethod.GET, "/api/pdfs/**").hasAnyRole("MONTEUR", "KLANT")
+                        .requestMatchers(HttpMethod.DELETE, "/api/pdfs/**").hasAnyRole("MONTEUR", "KLANT")
 
                         // Monteur temporary (To remove later)
                         .requestMatchers("/api/parts/**").hasRole("MONTEUR")
+
                         .requestMatchers("/api/pdfs/upload/**").hasRole("MONTEUR")
 
 
-                        .requestMatchers(HttpMethod.GET, "/api/cars/{carId}").hasRole("KLANT")
                         .requestMatchers(HttpMethod.GET, "/api/cars/{carId}/repairs").hasRole("KLANT")
-                        .requestMatchers(HttpMethod.POST, "/api/pdfs/**").hasRole("KLANT")
-                        .requestMatchers(HttpMethod.GET, "/api/pdfs/**").hasRole("KLANT")
-                        .requestMatchers(HttpMethod.DELETE, "/api/pdfs/**").hasRole("KLANT")
+                        .requestMatchers(HttpMethod.GET, "/api/cars/**").hasAnyRole("MONTEUR", "KLANT")
 
 
                         .requestMatchers(HttpMethod.GET, "/api/parts/**").hasRole("MEDEWERKER")
@@ -97,4 +102,6 @@ public class SpringSecurityConfig {
 
         return http.build();
     }
+
+
 }
