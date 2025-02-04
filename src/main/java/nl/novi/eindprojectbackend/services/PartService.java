@@ -33,6 +33,15 @@ public class PartService {
         return partRepository.save(part);
     }
 
+    public Part updatePart(Long id, Part partDetails) {
+        return partRepository.findById(id).map(part -> {
+            part.setStock(partDetails.getStock());
+            part.setPrice(partDetails.getPrice());
+            return partRepository.save(part);
+        }).orElseThrow(() -> new IllegalArgumentException("Part not found"));
+    }
+
+
 
     public void deletePart(Long id) {
         if (partRepository.existsById(id)) {

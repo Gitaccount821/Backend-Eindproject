@@ -11,7 +11,6 @@ public class CarDto {
     private String ownerUsername;
     private List<RepairDto> repairs;
     private Double totalRepairCost;
-    private List<AttachmentDto> attachments;
     private String repairRequestDate;
 
     public CarDto(Car car) {
@@ -27,30 +26,25 @@ public class CarDto {
 
     @JsonCreator
     public CarDto(Long id, String carType, String ownerUsername,
-                  List<RepairDto> repairs, Double totalRepairCost,
-                  List<AttachmentDto> attachments, String repairRequestDate) {
+                  List<RepairDto> repairs, Double totalRepairCost, String repairRequestDate) {
         this.id = id;
         this.carType = carType;
         this.ownerUsername = ownerUsername;
         this.repairs = repairs;
         this.totalRepairCost = totalRepairCost;
-        this.attachments = attachments;
         this.repairRequestDate = repairRequestDate;
     }
 
     public Long getId() { return id; }
-    public String getCarType() { return carType; }  // FIXED: Added missing method
+    public String getCarType() { return carType; }
     public String getOwnerUsername() { return ownerUsername; }
     public List<RepairDto> getRepairs() { return repairs; }
     public Double getTotalRepairCost() { return totalRepairCost; }
-    public List<AttachmentDto> getAttachments() { return attachments; }
-    public String getRepairRequestDate() { return repairRequestDate; } // FIXED: Added missing method
-
+    public String getRepairRequestDate() { return repairRequestDate; }
 
     public void setCarType(String carType) { this.carType = carType; }
     public void setOwnerUsername(String ownerUsername) { this.ownerUsername = ownerUsername; }
     public void setRepairs(List<RepairDto> repairs) { this.repairs = repairs; }
     public void setTotalRepairCost(Double totalRepairCost) { this.totalRepairCost = totalRepairCost; }
-    public void setAttachments(List<AttachmentDto> attachments) { this.attachments = attachments; }
     public void setRepairRequestDate(String repairRequestDate) { this.repairRequestDate = repairRequestDate; }
 }

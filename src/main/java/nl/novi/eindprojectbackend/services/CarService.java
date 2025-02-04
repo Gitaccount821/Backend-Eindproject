@@ -1,5 +1,6 @@
 package nl.novi.eindprojectbackend.services;
 
+import nl.novi.eindprojectbackend.dtos.CarDto;
 import nl.novi.eindprojectbackend.models.Car;
 import nl.novi.eindprojectbackend.models.PdfAttachment;
 import nl.novi.eindprojectbackend.models.Repair;
@@ -12,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -59,8 +61,48 @@ public class CarService {
     }
 
     public void deleteCar(Long id) {
-        carRepository.deleteById(id);
+        Car car = carRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Car not found"));
+
+
+        List<Repair> repairs = car.getRepairs();
+        repairRepository.deleteAll(repairs);
+
+
+        if (car.getPdfAttachment() != null) {
+            pdfAttachmentRepository.delete(car.getPdfAttachment());
+        }
+
+
+        carRepository.delete(car);
+        System.out.println("Car deleted successfully: " + id);
     }
+
+    public Car updateCar(Long id, CarDto carDto) {
+        return carRepository.findById(id).map(car -> {
+            car.setCarType(carDto.getCarType());
+            car.setRepairRequestDate(carDto.getRepairRequestDate());
+            return carRepository.save(car);
+        }).orElseThrow(() -> new IllegalArgumentException("Car not found"));
+    }
+
+    public Car patchCar(Long id, Map<String, Object> updates) {
+        Car car = carRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Car not found"));
+
+        if (updates.containsKey("carType")) {
+            car.setCarType((String) updates.get("carType"));
+        }
+        if (updates.containsKey("repairRequestDate")) {
+            car.setRepairRequestDate((String) updates.get("repairRequestDate"));
+        }
+
+        return carRepository.save(car);
+    }
+
+
+
+
 
     public PdfAttachment addPdfAttachment(Long carId, PdfAttachment attachment) {
         Car car = carRepository.findById(carId)

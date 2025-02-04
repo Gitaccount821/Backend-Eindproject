@@ -1,6 +1,7 @@
 package nl.novi.eindprojectbackend.dtos;
 
 import nl.novi.eindprojectbackend.models.Repair;
+import nl.novi.eindprojectbackend.models.Part;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -8,57 +9,73 @@ import java.util.stream.Collectors;
 public class RepairDto {
     private Long id;
     private Long repairTypeId;
-    private Double cost;
+    private String repairTypeName;
+    private Double repairTypeCost;
+    private Double totalRepairCost;
     private String repairRequestDate;
     private String repairDate;
     private List<Long> partIds;
-
+    private List<PartDetailDto> partDetails;
 
     public RepairDto() {
     }
 
-
-    public RepairDto(Long id, Long repairTypeId, Double cost, String repairRequestDate, String repairDate, List<Long> partIds) {
+    public RepairDto(Long id, Long repairTypeId, String repairTypeName, Double repairTypeCost, Double totalRepairCost,
+                     String repairRequestDate, String repairDate, List<Long> partIds, List<PartDetailDto> partDetails) {
         this.id = id;
         this.repairTypeId = repairTypeId;
-        this.cost = cost;
+        this.repairTypeName = repairTypeName;
+        this.repairTypeCost = repairTypeCost;
+        this.totalRepairCost = totalRepairCost;
         this.repairRequestDate = repairRequestDate;
         this.repairDate = repairDate;
         this.partIds = partIds;
+        this.partDetails = partDetails;
     }
-
 
     public RepairDto(Repair repair) {
         this.id = repair.getId();
         this.repairTypeId = (repair.getRepairType() != null) ? repair.getRepairType().getId() : null;
-        this.cost = repair.getTotalRepairCost();
+        this.repairTypeName = (repair.getRepairType() != null) ? repair.getRepairType().getName() : null;
+        this.repairTypeCost = (repair.getRepairType() != null) ? repair.getRepairType().getCost() : null;
+        this.totalRepairCost = repair.getTotalRepairCost();
         this.repairRequestDate = (repair.getRepairRequestDate() != null)
                 ? new SimpleDateFormat("dd-MM-yyyy").format(repair.getRepairRequestDate())
                 : null;
         this.repairDate = (repair.getRepairDate() != null)
                 ? new SimpleDateFormat("dd-MM-yyyy").format(repair.getRepairDate())
                 : null;
+
+
         this.partIds = (repair.getParts() != null)
-                ? repair.getParts().stream().map(part -> part.getId()).collect(Collectors.toList())
+                ? repair.getParts().stream().map(Part::getId).collect(Collectors.toList())
+                : null;
+
+
+        this.partDetails = (repair.getParts() != null)
+                ? repair.getParts().stream().map(part -> new PartDetailDto(part.getId(), part.getName(), part.getPrice())).collect(Collectors.toList())
                 : null;
     }
 
-    // Getters and Setters
+
     public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-
     public Long getRepairTypeId() { return repairTypeId; }
-    public void setRepairTypeId(Long repairTypeId) { this.repairTypeId = repairTypeId; }
-
-    public Double getCost() { return cost; }
-    public void setCost(Double cost) { this.cost = cost; }
-
+    public String getRepairTypeName() { return repairTypeName; }
+    public Double getRepairTypeCost() { return repairTypeCost; }
+    public Double getTotalRepairCost() { return totalRepairCost; }
     public String getRepairRequestDate() { return repairRequestDate; }
-    public void setRepairRequestDate(String repairRequestDate) { this.repairRequestDate = repairRequestDate; }
-
     public String getRepairDate() { return repairDate; }
-    public void setRepairDate(String repairDate) { this.repairDate = repairDate; }
-
     public List<Long> getPartIds() { return partIds; }
+    public List<PartDetailDto> getPartDetails() { return partDetails; }
+
+
+    public void setId(Long id) { this.id = id; }
+    public void setRepairTypeId(Long repairTypeId) { this.repairTypeId = repairTypeId; }
+    public void setRepairTypeName(String repairTypeName) { this.repairTypeName = repairTypeName; }
+    public void setRepairTypeCost(Double repairTypeCost) { this.repairTypeCost = repairTypeCost; }
+    public void setTotalRepairCost(Double totalRepairCost) { this.totalRepairCost = totalRepairCost; }
+    public void setRepairRequestDate(String repairRequestDate) { this.repairRequestDate = repairRequestDate; }
+    public void setRepairDate(String repairDate) { this.repairDate = repairDate; }
     public void setPartIds(List<Long> partIds) { this.partIds = partIds; }
+    public void setPartDetails(List<PartDetailDto> partDetails) { this.partDetails = partDetails; }
 }

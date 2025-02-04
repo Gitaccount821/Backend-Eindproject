@@ -60,31 +60,29 @@ public class SpringSecurityConfig {
 
                         .requestMatchers(HttpMethod.POST, "/api/users/create-user").hasRole("MEDEWERKER")
 
-
+                        .requestMatchers(HttpMethod.GET,"/api/repair-types/**").hasAnyRole("MONTEUR", "MEDEWERKER")
                         .requestMatchers("/api/repair-types/**").hasRole("MONTEUR")
                         .requestMatchers("/api/cars/{carId}/repairs").hasRole("MONTEUR")
                         .requestMatchers("/api/repairs/**").hasAnyRole("MONTEUR", "MEDEWERKER")
 
-                        .requestMatchers("/api/pdfs/download/**").hasAnyRole("MONTEUR", "KLANT")
+
+                        .requestMatchers("/api/pdfs/download/**").hasAnyRole("MONTEUR", "KLANT", "MEDEWERKER")
                         .requestMatchers(HttpMethod.POST, "/api/pdfs/**").hasRole("KLANT")
-                        .requestMatchers(HttpMethod.GET, "/api/pdfs/**").hasAnyRole("MONTEUR", "KLANT")
-                        .requestMatchers(HttpMethod.DELETE, "/api/pdfs/**").hasAnyRole("MONTEUR", "KLANT")
-
-                        // Monteur temporary (To remove later)
-                        .requestMatchers("/api/parts/**").hasRole("MONTEUR")
-                        .requestMatchers("/api/pdfs/upload/**").hasRole("MONTEUR")
+                        .requestMatchers(HttpMethod.DELETE, "/api/pdfs/**").hasAnyRole("MONTEUR", "KLANT", "MEDEWERKER")
 
 
-                        .requestMatchers(HttpMethod.GET, "/api/cars/{carId}").hasRole("KLANT")
-                        .requestMatchers(HttpMethod.GET, "/api/cars/{carId}/repairs").hasRole("KLANT")
+                        .requestMatchers("/api/parts/**").hasAnyRole("MONTEUR", "MEDEWERKER")
+
+                        .requestMatchers(HttpMethod.PUT, "/api/cars/**", "/api/parts/**").hasAnyRole("MEDEWERKER", "MONTEUR")
 
 
-                        .requestMatchers(HttpMethod.GET, "/api/cars/**").hasAnyRole("MONTEUR", "MEDEWERKER")
+                        .requestMatchers(HttpMethod.GET, "/api/cars/{carId}").hasAnyRole("MONTEUR", "MEDEWERKER", "KLANT")
+                        .requestMatchers(HttpMethod.GET, "/api/cars/{carId}/repairs").hasAnyRole("MONTEUR", "MEDEWERKER", "KLANT")
+
+                        .requestMatchers("/api/cars/**").hasAnyRole("MEDEWERKER", "MONTEUR")
 
 
-                        .requestMatchers("/api/cars/**").hasRole("MEDEWERKER")
-                        .requestMatchers("/api/parts/**").hasRole("MEDEWERKER")
-                        .requestMatchers("/api/repair-types/**").hasRole("MEDEWERKER")
+
 
                         .anyRequest().authenticated()
                 )
