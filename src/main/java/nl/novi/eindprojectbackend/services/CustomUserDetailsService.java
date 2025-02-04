@@ -26,7 +26,6 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = userRepository.findById(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 
-
         Set<GrantedAuthority> grantedAuthorities = user.getAuthorities().stream()
                 .map(authority -> new SimpleGrantedAuthority(authority.getAuthority()))
                 .collect(Collectors.toSet());
@@ -40,5 +39,10 @@ public class CustomUserDetailsService implements UserDetailsService {
                 true,
                 grantedAuthorities
         );
+    }
+
+    public User findUserByUsername(String username) {
+        return userRepository.findById(username)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
     }
 }
