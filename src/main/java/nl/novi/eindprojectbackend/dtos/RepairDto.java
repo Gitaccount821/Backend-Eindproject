@@ -1,5 +1,7 @@
 package nl.novi.eindprojectbackend.dtos;
 
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import nl.novi.eindprojectbackend.models.Repair;
 import nl.novi.eindprojectbackend.models.Part;
 import java.text.SimpleDateFormat;
@@ -8,8 +10,13 @@ import java.util.stream.Collectors;
 
 public class RepairDto {
     private Long id;
+
+    @NotNull(message = "Repair type ID cannot be null")
     private Long repairTypeId;
+
+    @Size(max = 100, message = "Repair type name cannot exceed 100 characters")
     private String repairTypeName;
+
     private Double repairTypeCost;
     private Double totalRepairCost;
     private String repairRequestDate;
@@ -45,18 +52,15 @@ public class RepairDto {
         this.repairDate = (repair.getRepairDate() != null)
                 ? new SimpleDateFormat("dd-MM-yyyy").format(repair.getRepairDate())
                 : null;
-
-
         this.partIds = (repair.getParts() != null)
                 ? repair.getParts().stream().map(Part::getId).collect(Collectors.toList())
                 : null;
-
-
         this.partDetails = (repair.getParts() != null)
-                ? repair.getParts().stream().map(part -> new PartDetailDto(part.getId(), part.getName(), part.getPrice())).collect(Collectors.toList())
+                ? repair.getParts().stream()
+                .map(part -> new PartDetailDto(part.getId(), part.getName(), part.getPrice()))
+                .collect(Collectors.toList())
                 : null;
     }
-
 
     public Long getId() { return id; }
     public Long getRepairTypeId() { return repairTypeId; }

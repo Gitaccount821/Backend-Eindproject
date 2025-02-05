@@ -1,6 +1,9 @@
 package nl.novi.eindprojectbackend.models;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -8,12 +11,13 @@ import java.util.Set;
 @Table(name = "users")
 public class User {
 
-
     @Id
     @Column(nullable = false, unique = true)
+    @NotBlank(message = "Username cannot be empty")
     private String username;
 
     @Column(nullable = false, length = 255)
+    @NotBlank(message = "Password is required")
     private String password;
 
     @OneToMany(
@@ -24,15 +28,14 @@ public class User {
             fetch = FetchType.EAGER)
     private Set<Authority> authorities = new HashSet<>();
 
-
     @Column(nullable = false)
     private boolean enabled = true;
 
-    @Column
+    @Email(message = "Invalid email format")
     private String email;
 
-    @Column
     private String apikey;
+
 
 
     public String getUsername() {
