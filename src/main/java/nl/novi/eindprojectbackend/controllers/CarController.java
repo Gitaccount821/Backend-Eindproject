@@ -1,9 +1,8 @@
 package nl.novi.eindprojectbackend.controllers;
 
 import nl.novi.eindprojectbackend.dtos.CarDto;
-import nl.novi.eindprojectbackend.dtos.AttachmentDto;
-import nl.novi.eindprojectbackend.dtos.PartDetailDto;
 import nl.novi.eindprojectbackend.dtos.RepairDto;
+import nl.novi.eindprojectbackend.mappers.CarMapper;
 import nl.novi.eindprojectbackend.models.*;
 import nl.novi.eindprojectbackend.services.*;
 
@@ -58,7 +57,7 @@ public class CarController {
         car.setRepairRequestDate(carDto.getRepairRequestDate());
 
         Car savedCar = carService.addCar(car, carDto.getOwnerUsername());
-        return ResponseEntity.ok(new CarDto(savedCar));
+        return ResponseEntity.ok(CarMapper.toDto(savedCar));
     }
 
     @GetMapping(produces = "application/json")
@@ -69,8 +68,9 @@ public class CarController {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Klant can only access their own cars.");
         }
 
-        List<Car> cars = carService.getAllCars();
-        List<CarDto> carDtos = cars.stream().map(this::convertToCarDto).collect(Collectors.toList());
+        List<CarDto> carDtos = carService.getAllCars().stream()
+                .map(CarMapper::toDto)
+                .collect(Collectors.toList());
         return ResponseEntity.ok(carDtos);
     }
 
@@ -90,7 +90,7 @@ public class CarController {
             }
         }
 
-        return ResponseEntity.ok(convertToCarDto(car));
+        return ResponseEntity.ok(CarMapper.toDto(car));
     }
 
     @PostMapping(value = "/{carId}/repairs", consumes = "application/json", produces = "application/json")
@@ -112,25 +112,21 @@ public class CarController {
             repair.setCar(car);
 
             SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
-            Date repairRequestDate = sdf.parse(repairDto.getRepairRequestDate());
-            repair.setRepairRequestDate(repairRequestDate);
+            repair.setRepairRequestDate(sdf.parse(repairDto.getRepairRequestDate()));
 
             if (repairDto.getRepairDate() != null) {
-                Date repairDate = sdf.parse(repairDto.getRepairDate());
-                repair.setRepairDate(repairDate);
+                repair.setRepairDate(sdf.parse(repairDto.getRepairDate()));
             }
 
             double totalCost = repairType.getCost();
 
             if (repairDto.getPartIds() != null && !repairDto.getPartIds().isEmpty()) {
-                List<Part> parts = repairDto.getPartIds().stream()
+                repair.setParts(repairDto.getPartIds().stream()
                         .map(partId -> partService.getPartById(partId)
                                 .orElseThrow(() -> new IllegalArgumentException("Part not found for ID: " + partId)))
-                        .collect(Collectors.toList());
+                        .collect(Collectors.toList()));
 
-                repair.setParts(parts);
-
-                for (Part part : parts) {
+                for (Part part : repair.getParts()) {
                     totalCost += part.getPrice();
                     part.setStock(part.getStock() - 1);
                     partService.updatePart(part);
@@ -143,34 +139,11 @@ public class CarController {
             car.updateTotalRepairCost();
             carService.updateCar(car.getId(), car);
 
-            return ResponseEntity.ok(convertToCarDto(car));
+            return ResponseEntity.ok(CarMapper.toDto(car));
         } catch (Exception e) {
             e.printStackTrace();
             return ResponseEntity.badRequest().body(null);
         }
-    }
-
-    @GetMapping(value = "/{carId}/repairs", produces = "application/json")
-    public ResponseEntity<?> getRepairsByCarId(@PathVariable Long carId) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
-        Car car = carService.getCarById(carId).orElse(null);
-        if (car == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Car not found.");
-        }
-
-        if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_KLANT"))) {
-            String username = auth.getName();
-            if (!car.getOwner().getUsername().equals(username)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can only access your own car.");
-            }
-        }
-
-        List<RepairDto> repairDtos = car.getRepairs().stream()
-                .map(RepairDto::new)
-                .collect(Collectors.toList());
-
-        return ResponseEntity.ok(repairDtos);
     }
 
     @PatchMapping("/{carId}/repairs/{repairId}")
@@ -193,8 +166,7 @@ public class CarController {
         }
     }
 
-
-    @PutMapping(value = "/{id}", consumes = "application/json", produces = "application/json")
+    @PutMapping("/{id}")
     public ResponseEntity<?> updateCar(@PathVariable Long id, @RequestBody CarDto carDto) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
@@ -203,7 +175,7 @@ public class CarController {
         }
 
         Car updatedCar = carService.updateCar(id, carDto);
-        return ResponseEntity.ok(new CarDto(updatedCar));
+        return ResponseEntity.ok(CarMapper.toDto(updatedCar));
     }
 
     @DeleteMapping("/{id}")
@@ -221,51 +193,4 @@ public class CarController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Car not found.");
         }
     }
-
-    @PatchMapping(value = "/{id}", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<?> patchCar(@PathVariable Long id, @RequestBody Map<String, Object> updates) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
-        if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_KLANT"))) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Klant cannot update cars.");
-        }
-
-        try {
-            Car updatedCar = carService.patchCar(id, updates);
-            return ResponseEntity.ok(new CarDto(updatedCar));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error updating car: " + e.getMessage());
-        }
-    }
-
-
-
-
-
-    private CarDto convertToCarDto(Car car) {
-        return new CarDto(
-                car.getId(),
-                car.getCarType(),
-                car.getOwner().getUsername(),
-                car.getRepairs() != null ? car.getRepairs().stream()
-                        .map(repair -> new RepairDto(
-                                repair.getId(),
-                                repair.getRepairType().getId(),
-                                repair.getRepairType().getName(),
-                                repair.getRepairType().getCost(),
-                                repair.getTotalRepairCost(),
-                                new SimpleDateFormat("dd-MM-yyyy").format(repair.getRepairRequestDate()),
-                                repair.getRepairDate() != null ? new SimpleDateFormat("dd-MM-yyyy").format(repair.getRepairDate()) : null,
-                                repair.getParts() != null ? repair.getParts().stream().map(Part::getId).collect(Collectors.toList()) : null,
-                                repair.getParts() != null ? repair.getParts().stream()
-                                        .map(part -> new PartDetailDto(part.getId(), part.getName(), part.getPrice()))
-                                        .collect(Collectors.toList()) : null
-                        ))
-                        .collect(Collectors.toList()) : List.of(),
-                car.getTotalRepairCost(),
-                car.getRepairRequestDate()
-        );
-    }
-
-
 }
