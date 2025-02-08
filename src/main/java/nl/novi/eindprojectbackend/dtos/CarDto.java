@@ -1,5 +1,7 @@
 package nl.novi.eindprojectbackend.dtos;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import nl.novi.eindprojectbackend.models.Car;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import java.util.List;
@@ -7,11 +9,16 @@ import java.util.stream.Collectors;
 
 public class CarDto {
     private Long id;
+
+    @NotBlank(message = "Car type cannot be empty")
+    @Size(max = 100, message = "Car type cannot exceed 100 characters")
     private String carType;
+
     private String ownerUsername;
     private List<RepairDto> repairs;
     private Double totalRepairCost;
     private String repairRequestDate;
+
 
     public CarDto(Car car) {
         this.id = car.getId();

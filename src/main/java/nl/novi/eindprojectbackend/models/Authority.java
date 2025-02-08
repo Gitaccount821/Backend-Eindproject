@@ -1,6 +1,8 @@
 package nl.novi.eindprojectbackend.models;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+
 import java.io.Serializable;
 
 @Entity
@@ -9,10 +11,12 @@ public class Authority implements Serializable {
 
     @Id
     @Column(nullable = false)
+    @NotBlank(message = "Username cannot be empty")
     private String username;
 
     @Column(nullable = false)
-    private String authority; // e.g., ROLE_MONTEUR
+    @NotBlank(message = "Authority cannot be empty")
+    private String authority;
 
     public Authority() {
     }
