@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -41,6 +42,22 @@ public class PartService {
         }).orElseThrow(() -> new IllegalArgumentException("Part not found"));
     }
 
+    public Part patchPart(Long id, Map<String, Object> updates) {
+        Part part = partRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Part not found"));
+
+        if (updates.containsKey("price")) {
+            part.setPrice(((Number) updates.get("price")).doubleValue());
+        }
+        if (updates.containsKey("stock")) {
+            part.setStock(((Number) updates.get("stock")).intValue());
+        }
+        if (updates.containsKey("name")) {
+            part.setName((String) updates.get("name"));
+        }
+
+        return partRepository.save(part);
+    }
 
 
     public void deletePart(Long id) {
