@@ -166,6 +166,41 @@ public class CarController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error updating repair: " + e.getMessage());
         }
     }
+    @PatchMapping("/{id}")
+    public ResponseEntity<?> patchCar(@PathVariable Long id, @RequestBody Map<String, Object> updates) {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+
+        if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_KLANT"))) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Klant cannot update cars.");
+        }
+
+        try {
+
+            Car car = carService.getCarById(id).orElseThrow(() -> new IllegalArgumentException("Car not found"));
+
+
+            if (updates.containsKey("carType")) {
+                car.setCarType((String) updates.get("carType"));
+            }
+
+
+            if (updates.containsKey("repairRequestDate")) {
+                SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+                String repairRequestDate = (String) updates.get("repairRequestDate");
+                car.setRepairRequestDate(String.valueOf(sdf.parse(repairRequestDate)));
+            }
+
+
+
+            carService.updateCar(car.getId(), car);
+
+            return ResponseEntity.ok(CarMapper.toDto(car));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error updating car: " + e.getMessage());
+        }
+    }
+
 
     @PutMapping("/{id}")
     public ResponseEntity<?> updateCar(@PathVariable Long id, @RequestBody CarDto carDto) {

@@ -8,7 +8,6 @@ import nl.novi.eindprojectbackend.repositories.CarRepository;
 import nl.novi.eindprojectbackend.repositories.PdfAttachmentRepository;
 import nl.novi.eindprojectbackend.repositories.RepairRepository;
 import nl.novi.eindprojectbackend.repositories.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,17 +17,20 @@ import java.util.Optional;
 @Service
 public class CarService {
 
-    @Autowired
-    private CarRepository carRepository;
+    private final CarRepository carRepository;
 
-    @Autowired
-    private PdfAttachmentRepository pdfAttachmentRepository;
+    private final PdfAttachmentRepository pdfAttachmentRepository;
 
-    @Autowired
-    private RepairRepository repairRepository;
+    private final RepairRepository repairRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+    private final UserRepository userRepository;
+
+    public CarService(CarRepository carRepository, PdfAttachmentRepository pdfAttachmentRepository, RepairRepository repairRepository, UserRepository userRepository) {
+        this.carRepository = carRepository;
+        this.pdfAttachmentRepository = pdfAttachmentRepository;
+        this.repairRepository = repairRepository;
+        this.userRepository = userRepository;
+    }
 
     public Car addCar(Car car, String ownerUsername) {
 

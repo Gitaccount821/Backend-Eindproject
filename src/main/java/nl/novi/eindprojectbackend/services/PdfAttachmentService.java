@@ -4,13 +4,11 @@ import nl.novi.eindprojectbackend.models.Car;
 import nl.novi.eindprojectbackend.models.PdfAttachment;
 import nl.novi.eindprojectbackend.repositories.CarRepository;
 import nl.novi.eindprojectbackend.repositories.PdfAttachmentRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.*;
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -19,18 +17,18 @@ public class PdfAttachmentService {
 
     private static final String UPLOAD_DIR = "uploads/pdf/";
 
-    @Autowired
-    private PdfAttachmentRepository pdfAttachmentRepository;
+    private final PdfAttachmentRepository pdfAttachmentRepository;
 
-    @Autowired
-    private CarRepository carRepository;
+    private final CarRepository carRepository;
 
-    public PdfAttachmentService() {
+    public PdfAttachmentService(PdfAttachmentRepository pdfAttachmentRepository, CarRepository carRepository) {
         try {
             Files.createDirectories(Paths.get(UPLOAD_DIR));
         } catch (IOException e) {
             throw new RuntimeException("Failed to create upload directory!", e);
         }
+        this.pdfAttachmentRepository = pdfAttachmentRepository;
+        this.carRepository = carRepository;
     }
 
 
@@ -39,7 +37,7 @@ public class PdfAttachmentService {
                 .orElseThrow(() -> new IllegalArgumentException("Car not found"));
 
 
-        String fileName = UUID.randomUUID().toString() + "_" + file.getOriginalFilename();
+        String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
         Path filePath = Paths.get(UPLOAD_DIR, fileName);
 
         try {

@@ -2,7 +2,6 @@ package nl.novi.eindprojectbackend.services;
 
 import nl.novi.eindprojectbackend.models.Part;
 import nl.novi.eindprojectbackend.repositories.PartRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,8 +11,11 @@ import java.util.Optional;
 @Service
 public class PartService {
 
-    @Autowired
-    private PartRepository partRepository;
+    private final PartRepository partRepository;
+
+    public PartService(PartRepository partRepository) {
+        this.partRepository = partRepository;
+    }
 
     public Part addPart(Part part) {
         return partRepository.save(part);
@@ -27,11 +29,11 @@ public class PartService {
         return partRepository.findById(id);
     }
 
-    public Part updatePart(Part part) {
+    public void updatePart(Part part) {
         if (part.getId() == null || !partRepository.existsById(part.getId())) {
             throw new IllegalArgumentException("Part not found for update.");
         }
-        return partRepository.save(part);
+        partRepository.save(part);
     }
 
     public Part updatePart(Long id, Part partDetails) {

@@ -2,7 +2,6 @@ package nl.novi.eindprojectbackend.services;
 
 import nl.novi.eindprojectbackend.models.RepairType;
 import nl.novi.eindprojectbackend.repositories.RepairTypeRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -12,8 +11,11 @@ import java.util.Optional;
 @Service
 public class RepairTypeService {
 
-    @Autowired
-    private RepairTypeRepository repairTypeRepository;
+    private final RepairTypeRepository repairTypeRepository;
+
+    public RepairTypeService(RepairTypeRepository repairTypeRepository) {
+        this.repairTypeRepository = repairTypeRepository;
+    }
 
     public RepairType addRepairType(RepairType repairType) {
         return repairTypeRepository.save(repairType);

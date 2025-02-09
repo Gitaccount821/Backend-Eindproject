@@ -33,12 +33,16 @@ public class UserController {
             user.setPassword(passwordEncoder.encode(userDto.getPassword()));
             user.addAuthority(new Authority(user.getUsername(), "ROLE_KLANT"));
 
+
+            user.setEnabled(true);
+
             userRepository.save(user);
             return ResponseEntity.ok("User registered successfully with role: ROLE_KLANT");
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Error during registration: " + e.getMessage());
         }
     }
+
 
     @PostMapping("/create-user")
     public ResponseEntity<String> createUser(@RequestBody UserDto userDto, @RequestParam String role) {
@@ -53,6 +57,9 @@ public class UserController {
 
         User user = UserMapper.toEntity(userDto);
         user.setPassword(passwordEncoder.encode(userDto.getPassword()));
+
+
+        user.setEnabled(true);
 
         String assignedRole;
         switch (role.toUpperCase()) {
@@ -71,4 +78,5 @@ public class UserController {
 
         return ResponseEntity.ok("User registered successfully with role: " + assignedRole);
     }
+
 }

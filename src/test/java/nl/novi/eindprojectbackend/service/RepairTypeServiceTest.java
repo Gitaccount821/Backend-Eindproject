@@ -55,7 +55,7 @@ class RepairTypeServiceTest {
         List<RepairType> result = repairTypeService.getAllRepairTypes();
 
         assertEquals(1, result.size());
-        assertEquals("Oil Change", result.get(0).getName());
+        assertEquals("Oil Change", result.getFirst().getName());
         verify(repairTypeRepository, times(1)).findAll();
     }
 

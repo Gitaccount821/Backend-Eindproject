@@ -7,7 +7,6 @@ import nl.novi.eindprojectbackend.repositories.CarRepository;
 import nl.novi.eindprojectbackend.repositories.RepairRepository;
 
 import nl.novi.eindprojectbackend.repositories.RepairTypeRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
@@ -19,17 +18,20 @@ import java.util.stream.Collectors;
 @Service
 public class RepairService {
 
-    @Autowired
-    private CarRepository carRepository;
+    private final CarRepository carRepository;
 
-    @Autowired
-    private RepairRepository repairRepository;
+    private final RepairRepository repairRepository;
 
-    @Autowired
-    private RepairTypeRepository repairTypeRepository;
+    private final RepairTypeRepository repairTypeRepository;
 
-    @Autowired
-    private PartService partService;
+    private final PartService partService;
+
+    public RepairService(CarRepository carRepository, RepairRepository repairRepository, RepairTypeRepository repairTypeRepository, PartService partService) {
+        this.carRepository = carRepository;
+        this.repairRepository = repairRepository;
+        this.repairTypeRepository = repairTypeRepository;
+        this.partService = partService;
+    }
 
     public Repair patchRepair(Long carId, Long repairId, Map<String, Object> updates) {
         Car car = carRepository.findById(carId)
@@ -74,11 +76,11 @@ public class RepairService {
     }
 
 
-    public Repair addRepair(Repair repair) {
+    public void addRepair(Repair repair) {
         if (repair.getCar() == null) {
             throw new IllegalArgumentException("Repair must be associated with a car.");
         }
-        return repairRepository.save(repair);
+        repairRepository.save(repair);
     }
 
 }
