@@ -71,6 +71,7 @@ public class CarService {
         carRepository.delete(car);
     }
 
+    // deze weghalen brak eerder de car patching, dus ik laat het nu express staan.
     public Car updateCar(Long id, CarDto carDto) {
         if (carDto.getCarType() == null || carDto.getCarType().isEmpty()) {
             throw new BadRequestException("Car type is required.");

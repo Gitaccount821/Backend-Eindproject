@@ -54,6 +54,7 @@ public class SpringSecurityConfig {
                 .cors(cors -> {})
                 .authorizeHttpRequests(auth -> auth
 
+                        // Deze endpoints hun roll classification kan waarschijnlijker schoner, maar eraan zitten heeft vaker endpoints gebroken. Wegens deadline durf ik hier niet verder aan te komen.
                         // --- Public Endpoints ---
                         .requestMatchers(HttpMethod.POST, "/authenticate").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users/register").permitAll()
@@ -66,7 +67,6 @@ public class SpringSecurityConfig {
                         .requestMatchers("/api/repair-types/**").hasRole("MONTEUR")
                         .requestMatchers("/api/cars/{carId}/repairs").hasRole("MONTEUR")
                         .requestMatchers("/api/cars/{carId}/repairs/**").hasRole("MONTEUR")
-
                         .requestMatchers("/api/repairs/**").hasAnyRole("MONTEUR", "MEDEWERKER")
 
                         // --- PDF Management ---
