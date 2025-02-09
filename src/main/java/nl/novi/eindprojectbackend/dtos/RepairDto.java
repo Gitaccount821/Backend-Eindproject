@@ -24,6 +24,7 @@ public class RepairDto {
     private List<Long> partIds;
     private List<PartDetailDto> partDetails;
 
+    // Warning ignoren, deze is nodig om geen 500 te krijgen bij reperatie toe te voegen van car
     public RepairDto() {
     }
 
@@ -62,6 +63,7 @@ public class RepairDto {
                 : null;
     }
 
+    // Allemaal nodig voor Carinformatie opvragen
     public Long getId() { return id; }
     public Long getRepairTypeId() { return repairTypeId; }
     public String getRepairTypeName() { return repairTypeName; }

@@ -4,7 +4,6 @@ import nl.novi.eindprojectbackend.dtos.RepairTypeDto;
 import nl.novi.eindprojectbackend.mappers.RepairTypeMapper;
 import nl.novi.eindprojectbackend.models.RepairType;
 import nl.novi.eindprojectbackend.services.RepairTypeService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -19,8 +18,11 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/repair-types")
 public class RepairTypeController {
 
-    @Autowired
-    private RepairTypeService repairTypeService;
+    private final RepairTypeService repairTypeService;
+
+    public RepairTypeController(RepairTypeService repairTypeService) {
+        this.repairTypeService = repairTypeService;
+    }
 
     @PostMapping
     public ResponseEntity<RepairTypeDto> addRepairType(@RequestBody RepairTypeDto repairTypeDto) {

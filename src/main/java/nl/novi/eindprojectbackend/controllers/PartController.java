@@ -2,7 +2,6 @@ package nl.novi.eindprojectbackend.controllers;
 
 import nl.novi.eindprojectbackend.models.Part;
 import nl.novi.eindprojectbackend.services.PartService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,8 +13,11 @@ import java.util.Map;
 @RequestMapping("/api/parts")
 public class PartController {
 
-    @Autowired
-    private PartService partService;
+    private final PartService partService;
+
+    public PartController(PartService partService) {
+        this.partService = partService;
+    }
 
     @PostMapping
     public ResponseEntity<Part> addPart(@RequestBody Part part) {

@@ -2,7 +2,6 @@ package nl.novi.eindprojectbackend.services;
 
 import nl.novi.eindprojectbackend.dtos.CarDto;
 import nl.novi.eindprojectbackend.models.Car;
-import nl.novi.eindprojectbackend.models.PdfAttachment;
 import nl.novi.eindprojectbackend.models.Repair;
 import nl.novi.eindprojectbackend.models.User;
 import nl.novi.eindprojectbackend.repositories.CarRepository;
@@ -104,40 +103,5 @@ public class CarService {
 
 
 
-    public PdfAttachment addPdfAttachment(Long carId, PdfAttachment attachment) {
-        Car car = carRepository.findById(carId)
-                .orElseThrow(() -> new IllegalArgumentException("Car not found"));
-        attachment.setCar(car);
-        return pdfAttachmentRepository.save(attachment);
-    }
 
-    public PdfAttachment getAttachmentByCarId(Long carId) {
-        Car car = carRepository.findById(carId)
-                .orElseThrow(() -> new IllegalArgumentException("Car not found"));
-
-        if (car.getPdfAttachment() == null) {
-            throw new IllegalArgumentException("No attachment found for this car");
-        }
-
-        return car.getPdfAttachment();
-    }
-
-    public Car addRepairToCar(Long carId, Repair repair) {
-        Car car = carRepository.findById(carId)
-                .orElseThrow(() -> new IllegalArgumentException("Car not found"));
-
-        repair.setCar(car);
-        car.getRepairs().add(repair);
-
-        car.updateTotalRepairCost();
-
-        carRepository.save(car);
-        return car;
-    }
-
-    public List<Repair> getRepairsByCarId(Long carId) {
-        Car car = carRepository.findById(carId)
-                .orElseThrow(() -> new IllegalArgumentException("Car not found"));
-        return car.getRepairs();
-    }
 }

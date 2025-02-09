@@ -5,7 +5,6 @@ import nl.novi.eindprojectbackend.mappers.PdfAttachmentMapper;
 import nl.novi.eindprojectbackend.models.PdfAttachment;
 import nl.novi.eindprojectbackend.services.PdfAttachmentService;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,8 +18,11 @@ import java.nio.file.Paths;
 @RequestMapping("/api/pdfs")
 public class PdfController {
 
-    @Autowired
-    private PdfAttachmentService pdfAttachmentService;
+    private final PdfAttachmentService pdfAttachmentService;
+
+    public PdfController(PdfAttachmentService pdfAttachmentService) {
+        this.pdfAttachmentService = pdfAttachmentService;
+    }
 
     @PostMapping(value = "/upload/{carId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<AttachmentDto> uploadPdf(@PathVariable Long carId, @RequestParam("file") MultipartFile file) {
@@ -66,6 +68,7 @@ public class PdfController {
         }
     }
 
+    //Check deze nog voor final upload, IPSEM LOPUM
     @DeleteMapping("/{carId}/{pdfId}")
     public ResponseEntity<Void> deletePdf(@PathVariable Long carId, @PathVariable Long pdfId) {
         try {

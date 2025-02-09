@@ -4,20 +4,9 @@ import nl.novi.eindprojectbackend.dtos.UserDto;
 import nl.novi.eindprojectbackend.models.Authority;
 import nl.novi.eindprojectbackend.models.User;
 
-import java.util.stream.Collectors;
-
 public class UserMapper {
 
-    public static UserDto toDto(User user) {
-        return new UserDto(
-                user.getUsername(),
-                user.getPassword(),
-                user.getEmail(),
-                user.isEnabled(),
-                user.getApikey(),
-                user.getAuthorities().stream().map(Authority::getAuthority).collect(Collectors.toSet())
-        );
-    }
+
 
     public static User toEntity(UserDto dto) {
         User user = new User();
@@ -27,7 +16,16 @@ public class UserMapper {
         user.setEnabled(dto.isEnabled());
         user.setApikey(dto.getApikey());
 
-        dto.getRoles().forEach(role -> user.addAuthority(new Authority(dto.getUsername(), role)));
+        if (dto.getRoles() != null) {
+            dto.getRoles().forEach(role -> {
+                if (role.equals("ROLE_KLANT") || role.equals("ROLE_MEDEWERKER") || role.equals("ROLE_MONTEUR")) {
+                    user.addAuthority(new Authority(dto.getUsername(), role));
+                } else {
+                    throw new IllegalArgumentException("Invalid role: " + role);
+                }
+            });
+        }
         return user;
     }
+
 }

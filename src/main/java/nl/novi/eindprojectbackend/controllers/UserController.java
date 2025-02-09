@@ -24,22 +24,26 @@ public class UserController {
 
     @PostMapping("/register")
     public ResponseEntity<String> registerUser(@RequestBody UserDto userDto) {
-        if (userRepository.existsById(userDto.getUsername())) {
-            return ResponseEntity.badRequest().body("Username already exists!");
+        try {
+            if (userRepository.existsById(userDto.getUsername())) {
+                return ResponseEntity.badRequest().body("Username already exists!");
+            }
+
+            User user = UserMapper.toEntity(userDto);
+            user.setPassword(passwordEncoder.encode(userDto.getPassword()));
+            user.addAuthority(new Authority(user.getUsername(), "ROLE_KLANT"));
+
+            userRepository.save(user);
+            return ResponseEntity.ok("User registered successfully with role: ROLE_KLANT");
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error during registration: " + e.getMessage());
         }
-
-        User user = UserMapper.toEntity(userDto);
-        user.setPassword(passwordEncoder.encode(userDto.getPassword()));
-        user.addAuthority(new Authority(user.getUsername(), "ROLE_KLANT"));
-
-        userRepository.save(user);
-        return ResponseEntity.ok("User registered successfully with role: ROLE_KLANT");
     }
 
     @PostMapping("/create-user")
     public ResponseEntity<String> createUser(@RequestBody UserDto userDto, @RequestParam String role) {
-        if (!SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
-                .anyMatch(auth -> auth.getAuthority().equals("ROLE_MEDEWERKER"))) {
+        if (SecurityContextHolder.getContext().getAuthentication().getAuthorities().stream()
+                .noneMatch(auth -> auth.getAuthority().equals("ROLE_MEDEWERKER"))) {
             return ResponseEntity.status(403).body("Only Medewerkers can create new users!");
         }
 

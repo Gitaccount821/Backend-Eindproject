@@ -1,5 +1,6 @@
 package nl.novi.eindprojectbackend.controllers;
 
+import nl.novi.eindprojectbackend.exceptions.InvalidCredentialsException;
 import nl.novi.eindprojectbackend.models.AuthenticationRequest;
 import nl.novi.eindprojectbackend.models.AuthenticationResponse;
 import nl.novi.eindprojectbackend.services.CustomUserDetailsService;
@@ -29,19 +30,16 @@ public class AuthenticationController {
     @PostMapping
     public AuthenticationResponse createAuthenticationToken(@RequestBody AuthenticationRequest request) {
         try {
-
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword())
             );
 
-
             UserDetails userDetails = customUserDetailsService.loadUserByUsername(request.getUsername());
             String jwt = jwtTokenUtil.generateToken(userDetails);
-
             return new AuthenticationResponse(jwt);
 
         } catch (AuthenticationException e) {
-            throw new RuntimeException("Invalid username or password.");
+            throw new InvalidCredentialsException("Invalid username or password.");
         }
     }
 }

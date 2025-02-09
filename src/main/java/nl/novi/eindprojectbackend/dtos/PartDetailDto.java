@@ -22,6 +22,7 @@ public class PartDetailDto {
         this.price = price;
     }
 
+    // Ook hier de warnings ignoren, deze is nodig om de prijzen te zijn wanneer carinfo wordt aangevraagd per part
     public Long getId() { return id; }
     public String getName() { return name; }
     public Double getPrice() { return price; }

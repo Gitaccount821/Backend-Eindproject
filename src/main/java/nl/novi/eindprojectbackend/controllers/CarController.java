@@ -6,7 +6,6 @@ import nl.novi.eindprojectbackend.mappers.CarMapper;
 import nl.novi.eindprojectbackend.models.*;
 import nl.novi.eindprojectbackend.services.*;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -14,7 +13,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -23,20 +21,23 @@ import java.util.stream.Collectors;
 @RequestMapping(value = "/api/cars", produces = "application/json")
 public class CarController {
 
-    @Autowired
-    private CarService carService;
+    private final CarService carService;
 
-    @Autowired
-    private RepairService repairService;
+    private final RepairService repairService;
 
-    @Autowired
-    private PartService partService;
+    private final PartService partService;
 
-    @Autowired
-    private RepairTypeService repairTypeService;
+    private final RepairTypeService repairTypeService;
 
-    @Autowired
-    private CustomUserDetailsService userDetailsService;
+    private final CustomUserDetailsService userDetailsService;
+
+    public CarController(CarService carService, RepairService repairService, PartService partService, RepairTypeService repairTypeService, CustomUserDetailsService userDetailsService) {
+        this.carService = carService;
+        this.repairService = repairService;
+        this.partService = partService;
+        this.repairTypeService = repairTypeService;
+        this.userDetailsService = userDetailsService;
+    }
 
     @PostMapping(produces = "application/json", consumes = "application/json")
     public ResponseEntity<?> addCar(@RequestBody CarDto carDto) {
@@ -97,7 +98,7 @@ public class CarController {
     public ResponseEntity<CarDto> addRepairToCar(@PathVariable Long carId, @RequestBody RepairDto repairDto) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-        if (!auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_MONTEUR"))) {
+        if (auth.getAuthorities().stream().noneMatch(a -> a.getAuthority().equals("ROLE_MONTEUR"))) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
         }
 
@@ -154,7 +155,7 @@ public class CarController {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-        if (!auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_MONTEUR"))) {
+        if (auth.getAuthorities().stream().noneMatch(a -> a.getAuthority().equals("ROLE_MONTEUR"))) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only Monteur can update repairs.");
         }
 
