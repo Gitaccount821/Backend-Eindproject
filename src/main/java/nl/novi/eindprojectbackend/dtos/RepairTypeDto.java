@@ -24,6 +24,7 @@ public class RepairTypeDto {
         this.description = description;
     }
 
+    //nodig voor carinformatie
     public Long getId() { return id; }
     public String getName() { return name; }
     public Double getCost() { return cost; }

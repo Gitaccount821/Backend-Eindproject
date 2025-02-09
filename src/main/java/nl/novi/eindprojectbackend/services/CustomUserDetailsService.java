@@ -1,5 +1,6 @@
 package nl.novi.eindprojectbackend.services;
 
+import nl.novi.eindprojectbackend.exceptions.BadRequestException;
 import nl.novi.eindprojectbackend.models.User;
 import nl.novi.eindprojectbackend.repositories.UserRepository;
 import org.springframework.security.core.GrantedAuthority;
@@ -24,7 +25,7 @@ public class CustomUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findById(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+                .orElseThrow(() -> new BadRequestException("User not found: " + username));
 
         Set<GrantedAuthority> grantedAuthorities = user.getAuthorities().stream()
                 .map(authority -> new SimpleGrantedAuthority(authority.getAuthority()))
@@ -43,6 +44,6 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     public User findUserByUsername(String username) {
         return userRepository.findById(username)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
+                .orElseThrow(() -> new BadRequestException("User not found: " + username));
     }
 }

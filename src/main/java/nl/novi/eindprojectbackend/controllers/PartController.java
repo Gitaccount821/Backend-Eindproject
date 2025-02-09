@@ -2,32 +2,43 @@ package nl.novi.eindprojectbackend.controllers;
 
 import nl.novi.eindprojectbackend.models.Part;
 import nl.novi.eindprojectbackend.services.PartService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-
-import org.springframework.beans.factory.annotation.Autowired;
+import nl.novi.eindprojectbackend.exceptions.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
+import jakarta.validation.Valid;
 
-import java.util.List;
 import java.util.Map;
 
 @RestController
 @RequestMapping("/api/parts")
 public class PartController {
 
-    @Autowired
-    private PartService partService;
+    private final PartService partService;
 
-    @GetMapping
-    public List<Part> getAllParts() {
-        return partService.getAllParts();
+    public PartController(PartService partService) {
+        this.partService = partService;
+    }
+
+    @PostMapping
+    public ResponseEntity<?> addPart(@Valid @RequestBody Part part) {
+        try {
+            if (part.getPrice() == null || part.getPrice() < 0) {
+                throw new BadRequestException("Price must be a positive value.");
+            }
+            if (part.getStock() == null || part.getStock() < 0) {
+                throw new BadRequestException("Stock must be a non-negative value.");
+            }
+
+            Part savedPart = partService.addPart(part);
+            return ResponseEntity.status(HttpStatus.CREATED).body(savedPart);
+
+        } catch (BadRequestException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid part data: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error adding part: " + e.getMessage());
+        }
     }
 
     @GetMapping("/{id}")
@@ -37,57 +48,83 @@ public class PartController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @PutMapping(value = "/{id}", consumes = "application/json", produces = "application/json")
+    @GetMapping
+    public ResponseEntity<?> getAllParts() {
+        return ResponseEntity.ok(partService.getAllParts());
+    }
+
+    @PutMapping("/{id}")
     public ResponseEntity<?> updatePart(@PathVariable Long id, @RequestBody Part partDetails) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        try {
 
-        if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_KLANT"))) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Klant cannot update parts.");
+            if (partDetails.getPrice() == null || partDetails.getPrice() < 0) {
+                throw new BadRequestException("Price must be a positive value.");
+            }
+
+            if (partDetails.getStock() == null || partDetails.getStock() < 0) {
+                throw new BadRequestException("Stock must be a non-negative value.");
+            }
+
+            if (partDetails.getName() == null || partDetails.getName().trim().isEmpty()) {
+                throw new BadRequestException("Part name cannot be empty.");
+            }
+
+            Part updatedPart = partService.updatePart(id, partDetails);
+            return ResponseEntity.ok(updatedPart);
+
+        } catch (BadRequestException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid part data: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error updating part: " + e.getMessage());
         }
-
-        Part updatedPart = partService.updatePart(id, partDetails);
-        return ResponseEntity.ok(updatedPart);
     }
 
-
-    @PostMapping
-    public ResponseEntity<Part> addPart(@RequestBody Part part) {
-        return ResponseEntity.status(201).body(partService.addPart(part));
-    }
-
-    @PutMapping
-    public ResponseEntity<Part> updatePart(@RequestBody Part part) {
-        if (part.getId() == null) {
-            return ResponseEntity.badRequest().build();
-        }
-        return ResponseEntity.ok(partService.updatePart(part));
-    }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<Part> patchPart(@PathVariable Long id, @RequestBody Map<String, Object> updates) {
-        Part part = partService.getPartById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Part not found"));
+    public ResponseEntity<?> patchPart(@PathVariable Long id, @RequestBody Map<String, Object> updates) {
+        try {
 
-        if (updates.containsKey("price")) {
-            part.setPrice(((Number) updates.get("price")).doubleValue());
-        }
-        if (updates.containsKey("stock")) {
-            part.setStock(((Number) updates.get("stock")).intValue());
-        }
-        if (updates.containsKey("name")) {
-            part.setName((String) updates.get("name"));
-        }
+            if (updates.containsKey("price")) {
+                Double price = (Double) updates.get("price");
+                if (price == null || price < 0) {
+                    throw new BadRequestException("Price must be a positive value.");
+                }
+            }
+            if (updates.containsKey("stock")) {
+                Integer stock = (Integer) updates.get("stock");
+                if (stock == null || stock < 0) {
+                    throw new BadRequestException("Stock must be a non-negative value.");
+                }
+            }
 
-        Part updatedPart = partService.updatePart(part);
-        return ResponseEntity.ok(updatedPart);
+
+            if (updates.containsKey("name")) {
+                String name = (String) updates.get("name");
+                if (name == null || name.trim().isEmpty()) {
+                    throw new BadRequestException("Part name cannot be empty.");
+                }
+            }
+
+
+            Part updatedPart = partService.patchPart(id, updates);
+            return ResponseEntity.ok(updatedPart);
+
+        } catch (BadRequestException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid part data: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error updating part: " + e.getMessage());
+        }
     }
-
 
 
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePart(@PathVariable Long id) {
-        partService.deletePart(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> deletePart(@PathVariable Long id) {
+        try {
+            partService.deletePart(id);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Part not found: " + e.getMessage());
+        }
     }
 }

@@ -1,8 +1,8 @@
 package nl.novi.eindprojectbackend.service;
 
-import nl.novi.eindprojectbackend.dtos.CarDto;
+
 import nl.novi.eindprojectbackend.models.Car;
-import nl.novi.eindprojectbackend.models.Repair;
+
 import nl.novi.eindprojectbackend.models.User;
 import nl.novi.eindprojectbackend.repositories.CarRepository;
 import nl.novi.eindprojectbackend.repositories.RepairRepository;

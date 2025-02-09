@@ -1,4 +1,5 @@
 package nl.novi.eindprojectbackend.services;
+import nl.novi.eindprojectbackend.exceptions.BadRequestException;
 import nl.novi.eindprojectbackend.models.Car;
 import nl.novi.eindprojectbackend.models.Part;
 import nl.novi.eindprojectbackend.models.Repair;
@@ -7,7 +8,6 @@ import nl.novi.eindprojectbackend.repositories.CarRepository;
 import nl.novi.eindprojectbackend.repositories.RepairRepository;
 
 import nl.novi.eindprojectbackend.repositories.RepairTypeRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.text.SimpleDateFormat;
@@ -19,17 +19,20 @@ import java.util.stream.Collectors;
 @Service
 public class RepairService {
 
-    @Autowired
-    private CarRepository carRepository;
+    private final CarRepository carRepository;
 
-    @Autowired
-    private RepairRepository repairRepository;
+    private final RepairRepository repairRepository;
 
-    @Autowired
-    private RepairTypeRepository repairTypeRepository;
+    private final RepairTypeRepository repairTypeRepository;
 
-    @Autowired
-    private PartService partService;
+    private final PartService partService;
+
+    public RepairService(CarRepository carRepository, RepairRepository repairRepository, RepairTypeRepository repairTypeRepository, PartService partService) {
+        this.carRepository = carRepository;
+        this.repairRepository = repairRepository;
+        this.repairTypeRepository = repairTypeRepository;
+        this.partService = partService;
+    }
 
     public Repair patchRepair(Long carId, Long repairId, Map<String, Object> updates) {
         Car car = carRepository.findById(carId)
@@ -41,17 +44,39 @@ public class RepairService {
                 .orElseThrow(() -> new IllegalArgumentException("Repair not found for this car"));
 
         if (updates.containsKey("repairDate")) {
+            String repairDate = (String) updates.get("repairDate");
+            if (repairDate.isEmpty()) {
+                throw new BadRequestException("Repair date cannot be empty.");
+            }
             SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
             try {
-                Date repairDate = sdf.parse((String) updates.get("repairDate"));
-                repair.setRepairDate(repairDate);
+                Date parsedDate = sdf.parse(repairDate);
+                repair.setRepairDate(parsedDate);
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Invalid date format. Use dd-MM-yyyy.");
+            }
+        }
+
+        if (updates.containsKey("repairRequestDate")) {
+            String repairRequestDate = (String) updates.get("repairRequestDate");
+            if (repairRequestDate.isEmpty()) {
+                throw new BadRequestException("Repair request date cannot be empty.");
+            }
+            SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+            try {
+                Date parsedDate = sdf.parse(repairRequestDate);
+                repair.setRepairRequestDate(parsedDate);
             } catch (Exception e) {
                 throw new IllegalArgumentException("Invalid date format. Use dd-MM-yyyy.");
             }
         }
 
         if (updates.containsKey("repairTypeId")) {
-            RepairType repairType = repairTypeRepository.findById(((Number) updates.get("repairTypeId")).longValue())
+            Object repairTypeIdObj = updates.get("repairTypeId");
+            if (repairTypeIdObj == null || !(repairTypeIdObj instanceof Number)) {
+                throw new IllegalArgumentException("Repair type ID is required and must be a valid number.");
+            }
+            RepairType repairType = repairTypeRepository.findById(((Number) repairTypeIdObj).longValue())
                     .orElseThrow(() -> new IllegalArgumentException("Repair Type not found"));
             repair.setRepairType(repairType);
         }
@@ -74,11 +99,12 @@ public class RepairService {
     }
 
 
-    public Repair addRepair(Repair repair) {
+
+    public void addRepair(Repair repair) {
         if (repair.getCar() == null) {
             throw new IllegalArgumentException("Repair must be associated with a car.");
         }
-        return repairRepository.save(repair);
+        repairRepository.save(repair);
     }
 
 }

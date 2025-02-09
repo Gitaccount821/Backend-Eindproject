@@ -2,7 +2,6 @@ package nl.novi.eindprojectbackend.models;
 
 import jakarta.persistence.*;
 
-import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -25,7 +24,6 @@ public class PdfAttachment {
     @JoinColumn(name = "car_id", unique = true, nullable = false)
     private Car car;
 
-    // Getters and setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 

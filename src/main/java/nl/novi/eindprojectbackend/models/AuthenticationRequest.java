@@ -1,17 +1,14 @@
 package nl.novi.eindprojectbackend.models;
 
+import jakarta.validation.constraints.NotEmpty;
+
 public class AuthenticationRequest {
 
+    @NotEmpty(message = "Username may not be empty")
     private String username;
+
+    @NotEmpty(message = "Password may not be empty")
     private String password;
-
-    public AuthenticationRequest() {
-    }
-
-    public AuthenticationRequest(String username, String password) {
-        this.username = username;
-        this.password = password;
-    }
 
     public String getUsername() {
         return username;

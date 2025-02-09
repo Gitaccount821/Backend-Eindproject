@@ -5,17 +5,18 @@ import jakarta.validation.constraints.NotBlank;
 import java.util.Set;
 
 public class UserDto {
+    @NotBlank(message = "Username may not be empty")
     private String username;
 
-    @NotBlank(message = "Password is required")
+    @NotBlank(message = "Password may not be empty")
     private String password;
 
     @Email(message = "Invalid email format")
     private String email;
 
-    private boolean enabled;
-    private String apikey;
-    private Set<String> roles;
+    private final boolean enabled;
+    private final String apikey;
+    private final Set<String> roles;
 
     public UserDto(String username, String password, String email, boolean enabled, String apikey, Set<String> roles) {
         this.username = username;
@@ -35,8 +36,4 @@ public class UserDto {
 
     public void setUsername(String username) { this.username = username; }
     public void setPassword(String password) { this.password = password; }
-    public void setEmail(String email) { this.email = email; }
-    public void setEnabled(boolean enabled) { this.enabled = enabled; }
-    public void setApikey(String apikey) { this.apikey = apikey; }
-    public void setRoles(Set<String> roles) { this.roles = roles; }
 }

@@ -1,14 +1,5 @@
 package nl.novi.eindprojectbackend.models;
 
-public class AuthenticationResponse {
+public record AuthenticationResponse(String jwt) {
 
-    private final String jwt;
-
-    public AuthenticationResponse(String jwt) {
-        this.jwt = jwt;
-    }
-
-    public String getJwt() {
-        return jwt;
-    }
 }

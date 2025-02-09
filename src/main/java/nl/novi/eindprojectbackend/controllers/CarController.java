@@ -2,11 +2,13 @@ package nl.novi.eindprojectbackend.controllers;
 
 import nl.novi.eindprojectbackend.dtos.CarDto;
 import nl.novi.eindprojectbackend.dtos.RepairDto;
+import nl.novi.eindprojectbackend.exceptions.BadRequestException;
+import nl.novi.eindprojectbackend.exceptions.CarNotFoundException;
+import nl.novi.eindprojectbackend.exceptions.RepairTypeNotFoundException;
 import nl.novi.eindprojectbackend.mappers.CarMapper;
 import nl.novi.eindprojectbackend.models.*;
 import nl.novi.eindprojectbackend.services.*;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -14,50 +16,58 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping(value = "/api/cars", produces = "application/json")
 public class CarController {
 
-    @Autowired
-    private CarService carService;
+    private final CarService carService;
 
-    @Autowired
-    private RepairService repairService;
+    private final RepairService repairService;
 
-    @Autowired
-    private PartService partService;
+    private final PartService partService;
 
-    @Autowired
-    private RepairTypeService repairTypeService;
+    private final RepairTypeService repairTypeService;
 
-    @Autowired
-    private CustomUserDetailsService userDetailsService;
+    private final CustomUserDetailsService userDetailsService;
+
+    public CarController(CarService carService, RepairService repairService, PartService partService, RepairTypeService repairTypeService, CustomUserDetailsService userDetailsService) {
+        this.carService = carService;
+        this.repairService = repairService;
+        this.partService = partService;
+        this.repairTypeService = repairTypeService;
+        this.userDetailsService = userDetailsService;
+    }
 
     @PostMapping(produces = "application/json", consumes = "application/json")
-    public ResponseEntity<?> addCar(@RequestBody CarDto carDto) {
+    public ResponseEntity<?> addCar(@Valid @RequestBody CarDto carDto) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_KLANT"))) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Klant cannot create cars.");
         }
 
-        User owner = userDetailsService.findUserByUsername(carDto.getOwnerUsername());
-        if (owner == null) {
-            return ResponseEntity.badRequest().body("Invalid ownerUsername: No such user exists.");
+        try {
+            User owner = userDetailsService.findUserByUsername(carDto.getOwnerUsername());
+            if (owner == null) {
+                throw new IllegalArgumentException("Invalid ownerUsername: No such user exists.");
+            }
+
+            Car car = new Car();
+            car.setCarType(carDto.getCarType());
+            car.setOwner(owner);
+            car.setRepairRequestDate(carDto.getRepairRequestDate());
+
+            Car savedCar = carService.addCar(car, carDto.getOwnerUsername());
+            return ResponseEntity.ok(CarMapper.toDto(savedCar));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error adding car: " + e.getMessage());
         }
-
-        Car car = new Car();
-        car.setCarType(carDto.getCarType());
-        car.setOwner(owner);
-        car.setRepairRequestDate(carDto.getRepairRequestDate());
-
-        Car savedCar = carService.addCar(car, carDto.getOwnerUsername());
-        return ResponseEntity.ok(CarMapper.toDto(savedCar));
     }
 
     @GetMapping(produces = "application/json")
@@ -77,45 +87,66 @@ public class CarController {
     @GetMapping(value = "/{id}", produces = "application/json")
     public ResponseEntity<?> getCarById(@PathVariable Long id) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        Car car = carService.getCarById(id).orElse(null);
+        try {
+            Car car = carService.getCarById(id).orElseThrow(() -> new CarNotFoundException("Car not found"));
 
-        if (car == null) {
-            return ResponseEntity.notFound().build();
-        }
-
-        if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_KLANT"))) {
-            String username = auth.getName();
-            if (!car.getOwner().getUsername().equals(username)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can only access your own car.");
+            if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_KLANT"))) {
+                String username = auth.getName();
+                if (!car.getOwner().getUsername().equals(username)) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can only access your own car.");
+                }
             }
-        }
 
-        return ResponseEntity.ok(CarMapper.toDto(car));
+            return ResponseEntity.ok(CarMapper.toDto(car));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Car not found for id: " + id);
+        }
     }
 
     @PostMapping(value = "/{carId}/repairs", consumes = "application/json", produces = "application/json")
-    public ResponseEntity<CarDto> addRepairToCar(@PathVariable Long carId, @RequestBody RepairDto repairDto) {
+    public Object addRepairToCar(@PathVariable Long carId, @RequestBody RepairDto repairDto) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-        if (!auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_MONTEUR"))) {
+        if (auth.getAuthorities().stream().noneMatch(a -> a.getAuthority().equals("ROLE_MONTEUR"))) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
         }
 
         try {
-            Car car = carService.getCarById(carId).orElseThrow(() -> new IllegalArgumentException("Car not found"));
+            Car car = carService.getCarById(carId).orElseThrow(() -> new CarNotFoundException("Car not found"));
+
+            if (repairDto.getRepairTypeId() == null) {
+                throw new BadRequestException("Repair type ID is required.");
+            }
 
             RepairType repairType = repairTypeService.getRepairTypeById(repairDto.getRepairTypeId())
-                    .orElseThrow(() -> new IllegalArgumentException("Repair type not found"));
+                    .orElseThrow(() -> new RepairTypeNotFoundException("Repair type not found"));
 
             Repair repair = new Repair();
             repair.setRepairType(repairType);
             repair.setCar(car);
 
-            SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
-            repair.setRepairRequestDate(sdf.parse(repairDto.getRepairRequestDate()));
+            String repairRequestDate = repairDto.getRepairRequestDate();
+            if (repairRequestDate != null && !repairRequestDate.isEmpty()) {
+                SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+                try {
+                    repair.setRepairRequestDate(sdf.parse(repairRequestDate));
+                } catch (Exception e) {
+                    throw new BadRequestException("Invalid repair request date format. Use dd-MM-yyyy.");
+                }
+            } else {
+                throw new BadRequestException("Repair request date cannot be empty.");
+            }
 
-            if (repairDto.getRepairDate() != null) {
-                repair.setRepairDate(sdf.parse(repairDto.getRepairDate()));
+            String repairDate = repairDto.getRepairDate();
+            if (repairDate != null && !repairDate.isEmpty()) {
+                SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+                try {
+                    repair.setRepairDate(sdf.parse(repairDate));
+                } catch (Exception e) {
+                    throw new BadRequestException("Invalid repair date format. Use dd-MM-yyyy.");
+                }
+            } else {
+                throw new BadRequestException("Repair date cannot be empty.");
             }
 
             double totalCost = repairType.getCost();
@@ -123,7 +154,7 @@ public class CarController {
             if (repairDto.getPartIds() != null && !repairDto.getPartIds().isEmpty()) {
                 repair.setParts(repairDto.getPartIds().stream()
                         .map(partId -> partService.getPartById(partId)
-                                .orElseThrow(() -> new IllegalArgumentException("Part not found for ID: " + partId)))
+                                .orElseThrow(() -> new BadRequestException("Part not found for ID: " + partId)))
                         .collect(Collectors.toList()));
 
                 for (Part part : repair.getParts()) {
@@ -140,9 +171,10 @@ public class CarController {
             carService.updateCar(car.getId(), car);
 
             return ResponseEntity.ok(CarMapper.toDto(car));
+        } catch (BadRequestException | RepairTypeNotFoundException | CarNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.badRequest().body(null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An unexpected error occurred.");
         }
     }
 
@@ -154,7 +186,7 @@ public class CarController {
 
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-        if (!auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_MONTEUR"))) {
+        if (auth.getAuthorities().stream().noneMatch(a -> a.getAuthority().equals("ROLE_MONTEUR"))) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only Monteur can update repairs.");
         }
 
@@ -166,16 +198,33 @@ public class CarController {
         }
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<?> updateCar(@PathVariable Long id, @RequestBody CarDto carDto) {
+    @PatchMapping("/{id}")
+    public ResponseEntity<?> patchCar(@PathVariable Long id, @RequestBody Map<String, Object> updates) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
         if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_KLANT"))) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Klant cannot update cars.");
         }
 
-        Car updatedCar = carService.updateCar(id, carDto);
-        return ResponseEntity.ok(CarMapper.toDto(updatedCar));
+        try {
+            Car car = carService.getCarById(id).orElseThrow(() -> new IllegalArgumentException("Car not found"));
+
+            if (updates.containsKey("carType")) {
+                car.setCarType((String) updates.get("carType"));
+            }
+
+            if (updates.containsKey("repairRequestDate")) {
+                SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
+                String repairRequestDate = (String) updates.get("repairRequestDate");
+                car.setRepairRequestDate(String.valueOf(sdf.parse(repairRequestDate)));
+            }
+
+            carService.updateCar(car.getId(), car);
+
+            return ResponseEntity.ok(CarMapper.toDto(car));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error updating car: " + e.getMessage());
+        }
     }
 
     @DeleteMapping("/{id}")

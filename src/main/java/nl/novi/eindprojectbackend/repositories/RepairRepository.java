@@ -6,5 +6,4 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface RepairRepository extends JpaRepository<Repair, Long> {
-    // voeg later hier custom queries toe indien ze nodig zijn
 }

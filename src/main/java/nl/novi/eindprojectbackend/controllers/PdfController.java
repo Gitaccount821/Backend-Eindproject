@@ -1,11 +1,13 @@
 package nl.novi.eindprojectbackend.controllers;
 
 import nl.novi.eindprojectbackend.dtos.AttachmentDto;
+import nl.novi.eindprojectbackend.exceptions.BadRequestException;
+import nl.novi.eindprojectbackend.exceptions.CarNotFoundException;
+import nl.novi.eindprojectbackend.exceptions.PdfNotFoundException;
 import nl.novi.eindprojectbackend.mappers.PdfAttachmentMapper;
 import nl.novi.eindprojectbackend.models.PdfAttachment;
 import nl.novi.eindprojectbackend.services.PdfAttachmentService;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,28 +21,39 @@ import java.nio.file.Paths;
 @RequestMapping("/api/pdfs")
 public class PdfController {
 
-    @Autowired
-    private PdfAttachmentService pdfAttachmentService;
+    private final PdfAttachmentService pdfAttachmentService;
+
+    public PdfController(PdfAttachmentService pdfAttachmentService) {
+        this.pdfAttachmentService = pdfAttachmentService;
+    }
 
     @PostMapping(value = "/upload/{carId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<AttachmentDto> uploadPdf(@PathVariable Long carId, @RequestParam("file") MultipartFile file) {
         try {
+
             PdfAttachment uploadedFile = pdfAttachmentService.uploadPdf(carId, file);
             return ResponseEntity.status(HttpStatus.CREATED)
                     .body(PdfAttachmentMapper.toDto(uploadedFile));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(null);
+        } catch (CarNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        } catch (BadRequestException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 
     @GetMapping("/{carId}")
     public ResponseEntity<AttachmentDto> getAttachmentByCarId(@PathVariable Long carId) {
         try {
+
             PdfAttachment attachment = pdfAttachmentService.getAttachmentByCarId(carId)
-                    .orElseThrow(() -> new IllegalArgumentException("No PDF found for this car"));
+                    .orElseThrow(PdfNotFoundException::new);
             return ResponseEntity.ok(PdfAttachmentMapper.toDto(attachment));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
+        } catch (CarNotFoundException | PdfNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 
@@ -48,7 +61,7 @@ public class PdfController {
     public ResponseEntity<Resource> downloadPdf(@PathVariable Long carId) {
         try {
             PdfAttachment attachment = pdfAttachmentService.getAttachmentByCarId(carId)
-                    .orElseThrow(() -> new IllegalArgumentException("No PDF found for this car"));
+                    .orElseThrow(PdfNotFoundException::new);
 
             Path filePath = Paths.get(attachment.getFilePath());
             Resource resource = new UrlResource(filePath.toUri());
@@ -61,18 +74,23 @@ public class PdfController {
                     .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + attachment.getFileName() + "\"")
                     .body(resource);
 
-        } catch (Exception e) {
+        } catch (PdfNotFoundException | CarNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
 
     @DeleteMapping("/{carId}/{pdfId}")
     public ResponseEntity<Void> deletePdf(@PathVariable Long carId, @PathVariable Long pdfId) {
         try {
+
             pdfAttachmentService.deleteAttachment(pdfId);
             return ResponseEntity.noContent().build();
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
+        } catch (CarNotFoundException | PdfNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
 }

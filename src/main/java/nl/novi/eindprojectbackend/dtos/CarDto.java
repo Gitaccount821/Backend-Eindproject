@@ -2,13 +2,11 @@ package nl.novi.eindprojectbackend.dtos;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import nl.novi.eindprojectbackend.models.Car;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class CarDto {
-    private Long id;
+    private final Long id;
 
     @NotBlank(message = "Car type cannot be empty")
     @Size(max = 100, message = "Car type cannot exceed 100 characters")
@@ -19,17 +17,6 @@ public class CarDto {
     private Double totalRepairCost;
     private String repairRequestDate;
 
-
-    public CarDto(Car car) {
-        this.id = car.getId();
-        this.carType = car.getCarType();
-        this.ownerUsername = (car.getOwner() != null) ? car.getOwner().getUsername() : null;
-        this.totalRepairCost = car.getTotalRepairCost();
-        this.repairRequestDate = car.getRepairRequestDate();
-        this.repairs = car.getRepairs().stream()
-                .map(RepairDto::new)
-                .collect(Collectors.toList());
-    }
 
     @JsonCreator
     public CarDto(Long id, String carType, String ownerUsername,
@@ -42,6 +29,8 @@ public class CarDto {
         this.repairRequestDate = repairRequestDate;
     }
 
+
+    // Veel warnings hier dat er geen usages zijn, maar het weghalen breekt wel de code van Car informatie (reperatie). Ignoring on purpose.
     public Long getId() { return id; }
     public String getCarType() { return carType; }
     public String getOwnerUsername() { return ownerUsername; }

@@ -16,7 +16,7 @@ public class User {
     @NotBlank(message = "Username cannot be empty")
     private String username;
 
-    @Column(nullable = false, length = 255)
+    @Column(nullable = false)
     @NotBlank(message = "Password is required")
     private String password;
 
@@ -86,7 +86,5 @@ public class User {
         this.authorities.add(authority);
     }
 
-    public void removeAuthority(Authority authority) {
-        this.authorities.remove(authority);
-    }
+
 }

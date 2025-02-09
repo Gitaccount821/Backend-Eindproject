@@ -13,11 +13,5 @@ public class PdfAttachmentMapper {
         );
     }
 
-    public static PdfAttachment toEntity(AttachmentDto dto) {
-        PdfAttachment pdfAttachment = new PdfAttachment();
-        pdfAttachment.setId(dto.getId());
-        pdfAttachment.setFileName(dto.getFileName());
-        pdfAttachment.setFilePath(dto.getFilePath());
-        return pdfAttachment;
-    }
+
 }
