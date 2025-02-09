@@ -9,11 +9,15 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/authenticate")
 public class AuthenticationController {
+
+    private static final Logger logger = LoggerFactory.getLogger(AuthenticationController.class);
 
     private final AuthenticationManager authenticationManager;
     private final CustomUserDetailsService customUserDetailsService;
@@ -39,7 +43,8 @@ public class AuthenticationController {
             return new AuthenticationResponse(jwt);
 
         } catch (AuthenticationException e) {
-            throw new InvalidCredentialsException("Invalid username or password.");
+            logger.error("Authentication failed for user: {}", request.getUsername(), e);
+            throw new InvalidCredentialsException();
         }
     }
 }

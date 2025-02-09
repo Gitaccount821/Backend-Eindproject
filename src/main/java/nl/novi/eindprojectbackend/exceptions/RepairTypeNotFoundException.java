@@ -6,7 +6,7 @@ public class RepairTypeNotFoundException extends RuntimeException {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    public RepairTypeNotFoundException(Long repairTypeId) {
+    public RepairTypeNotFoundException(String repairTypeId) {
         super("Repair Type with ID " + repairTypeId + " not found.");
     }
 }

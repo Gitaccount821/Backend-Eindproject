@@ -5,9 +5,10 @@ import jakarta.validation.constraints.NotBlank;
 import java.util.Set;
 
 public class UserDto {
+    @NotBlank(message = "Username may not be empty")
     private String username;
 
-    @NotBlank(message = "Password is required")
+    @NotBlank(message = "Password may not be empty")
     private String password;
 
     @Email(message = "Invalid email format")

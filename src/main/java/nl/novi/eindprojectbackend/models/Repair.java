@@ -42,7 +42,6 @@ public class Repair {
         this.car = car;
     }
 
-    // Getters and Setters
     public Long getId() {
         return id;
     }

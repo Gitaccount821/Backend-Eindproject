@@ -5,6 +5,7 @@ import nl.novi.eindprojectbackend.mappers.UserMapper;
 import nl.novi.eindprojectbackend.models.Authority;
 import nl.novi.eindprojectbackend.models.User;
 import nl.novi.eindprojectbackend.repositories.UserRepository;
+import nl.novi.eindprojectbackend.exceptions.BadRequestException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -33,16 +34,15 @@ public class UserController {
             user.setPassword(passwordEncoder.encode(userDto.getPassword()));
             user.addAuthority(new Authority(user.getUsername(), "ROLE_KLANT"));
 
-
             user.setEnabled(true);
-
             userRepository.save(user);
             return ResponseEntity.ok("User registered successfully with role: ROLE_KLANT");
+        } catch (BadRequestException e) {
+            return ResponseEntity.badRequest().body("Error during registration: " + e.getMessage());
         } catch (Exception e) {
             return ResponseEntity.status(500).body("Error during registration: " + e.getMessage());
         }
     }
-
 
     @PostMapping("/create-user")
     public ResponseEntity<String> createUser(@RequestBody UserDto userDto, @RequestParam String role) {
@@ -51,32 +51,35 @@ public class UserController {
             return ResponseEntity.status(403).body("Only Medewerkers can create new users!");
         }
 
-        if (userRepository.existsById(userDto.getUsername())) {
-            return ResponseEntity.badRequest().body("Username already exists!");
+        try {
+            if (userRepository.existsById(userDto.getUsername())) {
+                return ResponseEntity.badRequest().body("Username already exists!");
+            }
+
+            User user = UserMapper.toEntity(userDto);
+            user.setPassword(passwordEncoder.encode(userDto.getPassword()));
+            user.setEnabled(true);
+
+            String assignedRole;
+            switch (role.toUpperCase()) {
+                case "MEDEWERKER":
+                    assignedRole = "ROLE_MEDEWERKER";
+                    break;
+                case "MONTEUR":
+                    assignedRole = "ROLE_MONTEUR";
+                    break;
+                default:
+                    return ResponseEntity.badRequest().body("Invalid role. Only MEDEWERKER or MONTEUR allowed.");
+            }
+
+            user.addAuthority(new Authority(user.getUsername(), assignedRole));
+            userRepository.save(user);
+
+            return ResponseEntity.ok("User registered successfully with role: " + assignedRole);
+        } catch (BadRequestException e) {
+            return ResponseEntity.badRequest().body("Error during user creation: " + e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error during user creation: " + e.getMessage());
         }
-
-        User user = UserMapper.toEntity(userDto);
-        user.setPassword(passwordEncoder.encode(userDto.getPassword()));
-
-
-        user.setEnabled(true);
-
-        String assignedRole;
-        switch (role.toUpperCase()) {
-            case "MEDEWERKER":
-                assignedRole = "ROLE_MEDEWERKER";
-                break;
-            case "MONTEUR":
-                assignedRole = "ROLE_MONTEUR";
-                break;
-            default:
-                return ResponseEntity.badRequest().body("Invalid role. Only MEDEWERKER or MONTEUR allowed.");
-        }
-
-        user.addAuthority(new Authority(user.getUsername(), assignedRole));
-        userRepository.save(user);
-
-        return ResponseEntity.ok("User registered successfully with role: " + assignedRole);
     }
-
 }

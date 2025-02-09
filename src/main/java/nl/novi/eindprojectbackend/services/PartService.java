@@ -18,6 +18,12 @@ public class PartService {
     }
 
     public Part addPart(Part part) {
+        if (part.getPrice() == null || part.getPrice() < 0) {
+            throw new IllegalArgumentException("Price must be a positive value.");
+        }
+        if (part.getStock() == null || part.getStock() < 0) {
+            throw new IllegalArgumentException("Stock must be a non-negative value.");
+        }
         return partRepository.save(part);
     }
 
@@ -30,8 +36,11 @@ public class PartService {
     }
 
     public void updatePart(Part part) {
-        if (part.getId() == null || !partRepository.existsById(part.getId())) {
-            throw new IllegalArgumentException("Part not found for update.");
+        if (part.getPrice() == null || part.getPrice() < 0) {
+            throw new IllegalArgumentException("Price must be a positive value.");
+        }
+        if (part.getStock() == null || part.getStock() < 0) {
+            throw new IllegalArgumentException("Stock must be a non-negative value.");
         }
         partRepository.save(part);
     }
@@ -49,18 +58,27 @@ public class PartService {
                 .orElseThrow(() -> new IllegalArgumentException("Part not found"));
 
         if (updates.containsKey("price")) {
-            part.setPrice(((Number) updates.get("price")).doubleValue());
+            Double price = (Double) updates.get("price");
+            if (price == null || price < 0) {
+                throw new IllegalArgumentException("Price must be a positive value.");
+            }
+            part.setPrice(price);
         }
+
         if (updates.containsKey("stock")) {
-            part.setStock(((Number) updates.get("stock")).intValue());
+            Integer stock = (Integer) updates.get("stock");
+            if (stock == null || stock < 0) {
+                throw new IllegalArgumentException("Stock must be a non-negative value.");
+            }
+            part.setStock(stock);
         }
+
         if (updates.containsKey("name")) {
             part.setName((String) updates.get("name"));
         }
 
         return partRepository.save(part);
     }
-
 
     public void deletePart(Long id) {
         if (partRepository.existsById(id)) {

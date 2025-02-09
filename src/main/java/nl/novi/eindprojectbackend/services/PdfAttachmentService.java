@@ -4,6 +4,7 @@ import nl.novi.eindprojectbackend.models.Car;
 import nl.novi.eindprojectbackend.models.PdfAttachment;
 import nl.novi.eindprojectbackend.repositories.CarRepository;
 import nl.novi.eindprojectbackend.repositories.PdfAttachmentRepository;
+import nl.novi.eindprojectbackend.exceptions.PdfNotFoundException;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -18,7 +19,6 @@ public class PdfAttachmentService {
     private static final String UPLOAD_DIR = "uploads/pdf/";
 
     private final PdfAttachmentRepository pdfAttachmentRepository;
-
     private final CarRepository carRepository;
 
     public PdfAttachmentService(PdfAttachmentRepository pdfAttachmentRepository, CarRepository carRepository) {
@@ -31,11 +31,10 @@ public class PdfAttachmentService {
         this.carRepository = carRepository;
     }
 
-
     public PdfAttachment uploadPdf(Long carId, MultipartFile file) {
-        Car car = carRepository.findById(carId)
-                .orElseThrow(() -> new IllegalArgumentException("Car not found"));
 
+        Car car = carRepository.findById(carId)
+                .orElseThrow();
 
         String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
         Path filePath = Paths.get(UPLOAD_DIR, fileName);
@@ -46,7 +45,6 @@ public class PdfAttachmentService {
             throw new RuntimeException("Failed to store file!", e);
         }
 
-
         PdfAttachment attachment = new PdfAttachment();
         attachment.setFileName(file.getOriginalFilename());
         attachment.setFilePath(filePath.toString());
@@ -54,18 +52,16 @@ public class PdfAttachmentService {
         return pdfAttachmentRepository.save(attachment);
     }
 
-
     public Optional<PdfAttachment> getAttachmentByCarId(Long carId) {
-        return pdfAttachmentRepository.findByCarId(carId);
+
+        return Optional.ofNullable(pdfAttachmentRepository.findByCarId(carId)
+                .orElseThrow(PdfNotFoundException::new));
     }
 
-
-
-
-
     public void deleteAttachment(Long id) {
+
         PdfAttachment attachment = pdfAttachmentRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Attachment not found"));
+                .orElseThrow(PdfNotFoundException::new);
 
         try {
             Files.deleteIfExists(Paths.get(attachment.getFilePath()));
@@ -75,5 +71,4 @@ public class PdfAttachmentService {
 
         pdfAttachmentRepository.deleteById(id);
     }
-
 }

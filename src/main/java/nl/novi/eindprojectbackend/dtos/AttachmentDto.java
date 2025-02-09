@@ -21,7 +21,6 @@ public class AttachmentDto {
     }
 
 
-    // Getters and Setters
     public Long getId() {
         return id;
     }
@@ -33,8 +32,6 @@ public class AttachmentDto {
     public String getFileName() {
         return fileName;
     }
-
-
 
     public String getFilePath() {
         return filePath;

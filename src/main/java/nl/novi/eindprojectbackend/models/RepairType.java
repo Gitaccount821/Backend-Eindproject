@@ -24,7 +24,6 @@ public class RepairType {
     @Size(max = 255, message = "Description cannot exceed 255 characters")
     private String description;
 
-    // Getters and Setters
     public Long getId() {
         return id;
     }
