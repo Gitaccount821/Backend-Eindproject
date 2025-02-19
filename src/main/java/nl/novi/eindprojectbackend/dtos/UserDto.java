@@ -1,18 +1,13 @@
 package nl.novi.eindprojectbackend.dtos;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
 import java.util.Set;
 
 public class UserDto {
-    @NotBlank(message = "Username may not be empty")
     private String username;
 
-    @NotBlank(message = "Password may not be empty")
     private String password;
 
-    @Email(message = "Invalid email format")
-    private String email;
+    private final String email;
 
     private final boolean enabled;
     private final String apikey;
