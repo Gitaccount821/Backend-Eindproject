@@ -2,7 +2,6 @@ package nl.novi.eindprojectbackend.models;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -13,11 +12,9 @@ public class User {
 
     @Id
     @Column(nullable = false, unique = true)
-    @NotBlank(message = "Username cannot be empty")
     private String username;
 
     @Column(nullable = false)
-    @NotBlank(message = "Password is required")
     private String password;
 
     @OneToMany(

@@ -1,13 +1,12 @@
 package nl.novi.eindprojectbackend.exceptions;
 
+import java.io.Serial;
+
 public class InvalidCredentialsException extends RuntimeException {
-    private static final String DEFAULT_MESSAGE = "Invalid username or password.";
+    @Serial
+    private static final long serialVersionUID = 1L;
 
     public InvalidCredentialsException() {
-        super(DEFAULT_MESSAGE);
-    }
-
-    public InvalidCredentialsException(String message) {
-        super(message != null ? message : DEFAULT_MESSAGE);
+        super("Invalid username or password.");
     }
 }

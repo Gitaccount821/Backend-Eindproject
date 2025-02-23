@@ -1,6 +1,7 @@
 package nl.novi.eindprojectbackend.controllers;
 
 import nl.novi.eindprojectbackend.dtos.RepairTypeDto;
+import nl.novi.eindprojectbackend.exceptions.RecordNotFoundException;
 import nl.novi.eindprojectbackend.mappers.RepairTypeMapper;
 import nl.novi.eindprojectbackend.models.RepairType;
 import nl.novi.eindprojectbackend.services.RepairTypeService;
@@ -25,15 +26,26 @@ public class RepairTypeController {
         this.repairTypeService = repairTypeService;
     }
 
+    private void validateRepairType(String name, Object costObj) {
+        if (name != null && name.trim().isEmpty()) {
+            throw new BadRequestException("Name", true);
+        }
+
+        if (costObj != null) {
+            if (!(costObj instanceof Number)) {
+                throw new BadRequestException("Repair type cost must be a number.");
+            }
+
+            double cost = ((Number) costObj).doubleValue();
+            if (cost <= 0.0) {
+                throw new BadRequestException("Repair type cost must be greater than zero.");
+            }
+        }
+    }
+
     @PostMapping
     public ResponseEntity<RepairTypeDto> addRepairType(@RequestBody RepairTypeDto repairTypeDto) {
-
-        if (repairTypeDto.getName() == null || repairTypeDto.getName().trim().isEmpty()) {
-            throw new BadRequestException("Repair type name cannot be empty.");
-        }
-        if (repairTypeDto.getCost() == null || repairTypeDto.getCost() <= 0) {
-            throw new BadRequestException("Repair type cost must be greater than zero.");
-        }
+        validateRepairType(repairTypeDto.getName(), repairTypeDto.getCost());
 
         RepairType repairType = RepairTypeMapper.toEntity(repairTypeDto);
         RepairType newRepairType = repairTypeService.addRepairType(repairType);
@@ -49,64 +61,59 @@ public class RepairTypeController {
 
     @GetMapping("/{id}")
     public ResponseEntity<RepairTypeDto> getRepairTypeById(@PathVariable Long id) {
-        return repairTypeService.getRepairTypeById(id)
-                .map(repairType -> ResponseEntity.ok(RepairTypeMapper.toDto(repairType)))
-                .orElse(ResponseEntity.notFound().build());
+        RepairType repairType = repairTypeService.getRepairTypeById(id)
+                .orElseThrow(() -> new RecordNotFoundException("Repair Type", id));
+
+        return ResponseEntity.ok(RepairTypeMapper.toDto(repairType));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateRepairType(@PathVariable Long id, @RequestBody RepairTypeDto repairTypeDto) {
-        try {
+    public ResponseEntity<RepairTypeDto> updateRepairType(@PathVariable Long id, @RequestBody RepairTypeDto repairTypeDto) {
+        validateRepairType(repairTypeDto.getName(), repairTypeDto.getCost());
 
-            if (repairTypeDto.getName() == null || repairTypeDto.getName().trim().isEmpty()) {
-                throw new BadRequestException("Repair type name cannot be empty.");
-            }
-            if (repairTypeDto.getCost() == null || repairTypeDto.getCost() <= 0) {
-                throw new BadRequestException("Repair type cost must be greater than zero.");
-            }
+        repairTypeService.getRepairTypeById(id)
+                .orElseThrow(() -> new RecordNotFoundException("Repair Type", id));
 
-            RepairType updatedRepairType = repairTypeService.updateRepairType(id, RepairTypeMapper.toEntity(repairTypeDto));
-            return ResponseEntity.ok(RepairTypeMapper.toDto(updatedRepairType));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Repair type not found.");
-        }
+        RepairType updatedRepairType = repairTypeService.updateRepairType(id, RepairTypeMapper.toEntity(repairTypeDto));
+        return ResponseEntity.ok(RepairTypeMapper.toDto(updatedRepairType));
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<?> patchRepairType(@PathVariable Long id, @RequestBody Map<String, Object> updates) {
+    public ResponseEntity<RepairTypeDto> patchRepairType(@PathVariable Long id, @RequestBody Map<String, Object> updates) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
         if (auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_KLANT"))) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Klant cannot update repair types.");
+            throw new BadRequestException("Klant cannot update repair types.");
         }
 
-        try {
+        repairTypeService.getRepairTypeById(id)
+                .orElseThrow(() -> new RecordNotFoundException("Repair Type", id));
 
-            if (updates.containsKey("name")) {
-                String name = (String) updates.get("name");
-                if (name == null || name.trim().isEmpty()) {
-                    throw new BadRequestException("Repair type name cannot be empty.");
-                }
-            }
+        String name = updates.containsKey("name") ? (String) updates.get("name") : null;
+        Object costObj = updates.get("cost");
+        String description = updates.containsKey("description") ? (String) updates.get("description") : null;
 
-            if (updates.containsKey("cost")) {
-                Double cost = (Double) updates.get("cost");
-                if (cost == null || cost <= 0) {
-                    throw new BadRequestException("Repair type cost must be greater than zero.");
-                }
-            }
-
-            RepairType updatedRepairType = repairTypeService.patchRepairType(id, updates);
-            return ResponseEntity.ok(RepairTypeMapper.toDto(updatedRepairType));
-        } catch (BadRequestException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid repair type data: " + e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error updating repair type: " + e.getMessage());
+        Double cost = null;
+        if (costObj instanceof Integer) {
+            cost = ((Integer) costObj).doubleValue();
+        } else if (costObj instanceof Double) {
+            cost = (Double) costObj;
+        } else if (costObj != null) {
+            throw new BadRequestException("Repair type cost must be a valid number.");
         }
+
+        validateRepairType(name, cost);
+
+        updates.put("description", description);
+
+        RepairType updatedRepairType = repairTypeService.patchRepairType(id, updates);
+        return ResponseEntity.ok(RepairTypeMapper.toDto(updatedRepairType));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteRepairType(@PathVariable Long id) {
+        repairTypeService.getRepairTypeById(id)
+                .orElseThrow(() -> new RecordNotFoundException("Repair Type", id));
+
         repairTypeService.deleteRepairType(id);
         return ResponseEntity.noContent().build();
     }

@@ -1,7 +1,6 @@
 package nl.novi.eindprojectbackend.dtos;
 
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import nl.novi.eindprojectbackend.models.Repair;
 import nl.novi.eindprojectbackend.models.Part;
 import java.text.SimpleDateFormat;
@@ -14,7 +13,6 @@ public class RepairDto {
     @NotNull(message = "Repair type ID cannot be null")
     private Long repairTypeId;
 
-    @Size(max = 100, message = "Repair type name cannot exceed 100 characters")
     private String repairTypeName;
 
     private Double repairTypeCost;

@@ -1,7 +1,7 @@
 package nl.novi.eindprojectbackend.services;
 
 import nl.novi.eindprojectbackend.dtos.CarDto;
-import nl.novi.eindprojectbackend.exceptions.CarNotFoundException;
+import nl.novi.eindprojectbackend.exceptions.RecordNotFoundException;
 import nl.novi.eindprojectbackend.exceptions.BadRequestException;
 import nl.novi.eindprojectbackend.models.Car;
 import nl.novi.eindprojectbackend.models.Repair;
@@ -44,7 +44,7 @@ public class CarService {
 
     public Optional<Car> getCarById(Long id) {
         return Optional.ofNullable(carRepository.findById(id)
-                .orElseThrow(() -> new CarNotFoundException(id.toString())));
+                .orElseThrow(() -> new RecordNotFoundException("Car", id)));
     }
 
     public Car updateCar(Long id, Car updatedCar) {
@@ -54,12 +54,12 @@ public class CarService {
             car.setRepairs(updatedCar.getRepairs());
             car.updateTotalRepairCost();
             return carRepository.save(car);
-        }).orElseThrow(() -> new CarNotFoundException(id.toString()));
+        }).orElseThrow(() -> new RecordNotFoundException("Car", id));
     }
 
     public void deleteCar(Long id) {
         Car car = carRepository.findById(id)
-                .orElseThrow(() -> new CarNotFoundException(id.toString()));
+                .orElseThrow(() -> new RecordNotFoundException("Car", id));
 
         List<Repair> repairs = car.getRepairs();
         repairRepository.deleteAll(repairs);
@@ -85,12 +85,12 @@ public class CarService {
             car.setCarType(carDto.getCarType());
             car.setRepairRequestDate(carDto.getRepairRequestDate());
             return carRepository.save(car);
-        }).orElseThrow(() -> new CarNotFoundException(id.toString()));
+        }).orElseThrow(() -> new RecordNotFoundException("Car", id));
     }
 
     public Car patchCar(Long id, Map<String, Object> updates) {
         Car car = carRepository.findById(id)
-                .orElseThrow(() -> new CarNotFoundException(id.toString()));
+                .orElseThrow(() -> new RecordNotFoundException("Car", id));
 
         if (updates.containsKey("carType")) {
             car.setCarType((String) updates.get("carType"));
