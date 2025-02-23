@@ -1,18 +1,14 @@
 package nl.novi.eindprojectbackend.dtos;
 
-import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public class RepairTypeDto {
 
     private Long id;
 
-    @NotBlank(message = "Repair type name cannot be empty")
     @Size(max = 100, message = "Repair type name cannot exceed 100 characters")
     private String name;
 
-    @Min(value = 1, message = "Cost must be at least 1")
     private Double cost;
 
     private String description;
