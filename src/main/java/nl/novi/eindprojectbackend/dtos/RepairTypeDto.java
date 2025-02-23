@@ -1,7 +1,5 @@
 package nl.novi.eindprojectbackend.dtos;
 
-import jakarta.validation.constraints.Size;
-
 public class RepairTypeDto {
 
     private Long id;

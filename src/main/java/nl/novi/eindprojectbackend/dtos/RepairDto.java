@@ -1,7 +1,6 @@
 package nl.novi.eindprojectbackend.dtos;
 
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import nl.novi.eindprojectbackend.models.Repair;
 import nl.novi.eindprojectbackend.models.Part;
 import java.text.SimpleDateFormat;

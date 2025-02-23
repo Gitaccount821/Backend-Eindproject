@@ -28,20 +28,6 @@ public class ExceptionController {
         return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 
-    @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<Map<String, Object>> handleUserNotFoundException(UserNotFoundException ex, WebRequest request) {
-        return createErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), request);
-    }
-
-    @ExceptionHandler(CarNotFoundException.class)
-    public ResponseEntity<Map<String, Object>> handleCarNotFoundException(CarNotFoundException ex, WebRequest request) {
-        return createErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), request);
-    }
-
-    @ExceptionHandler(RepairTypeNotFoundException.class)
-    public ResponseEntity<Map<String, Object>> handleRepairTypeNotFoundException(RepairTypeNotFoundException ex, WebRequest request) {
-        return createErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), request);
-    }
 
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<Map<String, Object>> handleBadRequestException(BadRequestException ex, WebRequest request) {
@@ -55,13 +41,10 @@ public class ExceptionController {
 
     }
 
-
-
     @ExceptionHandler(ForbiddenActionException.class)
     public ResponseEntity<Map<String, Object>> handleForbiddenActionException(ForbiddenActionException ex, WebRequest request) {
         return createErrorResponse(HttpStatus.FORBIDDEN, ex.getMessage(), request);
     }
-
 
 
     @ExceptionHandler(Exception.class)

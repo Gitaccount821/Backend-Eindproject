@@ -1,7 +1,5 @@
 package nl.novi.eindprojectbackend.dtos;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 
 public class AttachmentDto {
     private Long id;

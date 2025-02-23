@@ -2,9 +2,6 @@ package nl.novi.eindprojectbackend.models;
 
 import jakarta.persistence.*;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
-
 @Entity
 public class PdfAttachment {
 
@@ -12,10 +9,8 @@ public class PdfAttachment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "File name cannot be empty")
     private String fileName;
 
-    @NotBlank(message = "File path cannot be empty")
     private String filePath;
 
     @OneToOne

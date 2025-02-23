@@ -1,7 +1,6 @@
 package nl.novi.eindprojectbackend.models;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotBlank;
 
 import java.io.Serializable;
 

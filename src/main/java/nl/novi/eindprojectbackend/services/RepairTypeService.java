@@ -21,13 +21,13 @@ public class RepairTypeService {
 
     private void validateRepairType(String name, Double cost, String description) {
         if (name == null || name.trim().isEmpty()) {
-            throw new BadRequestException("Repair type name cannot be empty.");
+            throw new BadRequestException("Repair type name", true);
         }
         if (cost == null || cost <= 0) {
             throw new BadRequestException("Repair type cost must be greater than zero.");
         }
         if (description == null || description.trim().isEmpty()) {
-            throw new BadRequestException("Repair type description cannot be empty.");
+            throw new BadRequestException("Repair type description", true);
         }
     }
 
@@ -64,7 +64,7 @@ public class RepairTypeService {
 
         String name = updates.containsKey("name") ? (String) updates.get("name") : repairType.getName();
         if (name == null || name.trim().isEmpty()) {
-            throw new BadRequestException("Repair type name cannot be empty.");
+            throw new BadRequestException("Repair type name", true);
         }
 
         Object costObj = updates.get("cost");
@@ -84,7 +84,7 @@ public class RepairTypeService {
 
         String description = updates.containsKey("description") ? (String) updates.get("description") : repairType.getDescription();
         if (description == null || description.trim().isEmpty()) {
-            throw new BadRequestException("Repair type description cannot be empty.");
+            throw new BadRequestException("Repair type description", true);
         }
 
         repairType.setName(name);

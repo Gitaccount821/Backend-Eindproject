@@ -1,6 +1,5 @@
 package nl.novi.eindprojectbackend.models;
 
-import jakarta.validation.constraints.NotEmpty;
 
 public class AuthenticationRequest {
 
