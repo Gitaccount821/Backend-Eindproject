@@ -8,8 +8,6 @@ import java.util.List;
 public class CarDto {
     private final Long id;
 
-    @NotBlank(message = "Car type cannot be empty")
-    @Size(max = 100, message = "Car type cannot exceed 100 characters")
     private String carType;
 
     private String ownerUsername;

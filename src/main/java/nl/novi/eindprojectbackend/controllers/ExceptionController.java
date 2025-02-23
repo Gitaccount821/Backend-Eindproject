@@ -51,7 +51,17 @@ public class ExceptionController {
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<Map<String, Object>> handleInvalidCredentialsException(InvalidCredentialsException ex) {
         return createErrorResponse(HttpStatus.UNAUTHORIZED, ex.getMessage(), null);
+
+
     }
+
+
+
+    @ExceptionHandler(ForbiddenActionException.class)
+    public ResponseEntity<Map<String, Object>> handleForbiddenActionException(ForbiddenActionException ex, WebRequest request) {
+        return createErrorResponse(HttpStatus.FORBIDDEN, ex.getMessage(), request);
+    }
+
 
 
     @ExceptionHandler(Exception.class)

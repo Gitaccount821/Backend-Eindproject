@@ -14,7 +14,6 @@ public class RepairDto {
     @NotNull(message = "Repair type ID cannot be null")
     private Long repairTypeId;
 
-    @Size(max = 100, message = "Repair type name cannot exceed 100 characters")
     private String repairTypeName;
 
     private Double repairTypeCost;

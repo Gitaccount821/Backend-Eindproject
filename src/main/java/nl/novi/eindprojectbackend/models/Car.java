@@ -15,22 +15,18 @@ public class Car {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Car type cannot be empty")
-    @Size(max = 50, message = "Car type cannot exceed 50 characters")
     private String carType;
 
     @ManyToOne
     @JoinColumn(name = "owner_username", referencedColumnName = "username", nullable = false)
     private User owner;
 
-    @NotBlank(message = "Repair request date is required")
     private String repairRequestDate;
 
     @OneToMany(mappedBy = "car", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     private List<Repair> repairs = new ArrayList<>();
 
     @Column(nullable = false)
-    @Min(value = 0, message = "Total repair cost cannot be negative")
     private Double totalRepairCost = 0.0;
 
     @OneToOne(mappedBy = "car", cascade = CascadeType.ALL, orphanRemoval = true)

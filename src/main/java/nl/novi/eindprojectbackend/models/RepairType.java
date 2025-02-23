@@ -13,15 +13,11 @@ public class RepairType {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Repair type name cannot be empty")
-    @Size(max = 50, message = "Repair type name cannot exceed 50 characters")
     private String name;
 
     @NotNull(message = "Cost is required")
-    @Min(value = 0, message = "Cost must be at least 0")
     private Double cost;
 
-    @Size(max = 255, message = "Description cannot exceed 255 characters")
     private String description;
 
     public Long getId() {

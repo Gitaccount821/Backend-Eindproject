@@ -6,7 +6,6 @@ public class RepairTypeDto {
 
     private Long id;
 
-    @Size(max = 100, message = "Repair type name cannot exceed 100 characters")
     private String name;
 
     private Double cost;

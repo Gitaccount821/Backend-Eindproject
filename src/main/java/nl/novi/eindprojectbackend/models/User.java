@@ -13,11 +13,9 @@ public class User {
 
     @Id
     @Column(nullable = false, unique = true)
-    @NotBlank(message = "Username cannot be empty")
     private String username;
 
     @Column(nullable = false)
-    @NotBlank(message = "Password is required")
     private String password;
 
     @OneToMany(

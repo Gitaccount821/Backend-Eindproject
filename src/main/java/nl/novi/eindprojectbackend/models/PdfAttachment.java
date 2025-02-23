@@ -13,11 +13,9 @@ public class PdfAttachment {
     private Long id;
 
     @NotBlank(message = "File name cannot be empty")
-    @Size(max = 100, message = "File name cannot exceed 100 characters")
     private String fileName;
 
     @NotBlank(message = "File path cannot be empty")
-    @Size(max = 255, message = "File path cannot exceed 255 characters")
     private String filePath;
 
     @OneToOne

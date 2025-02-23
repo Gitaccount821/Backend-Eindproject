@@ -26,7 +26,6 @@ public class Repair {
     private List<Part> parts;
 
     @NotNull(message = "Total repair cost cannot be null")
-    @Min(value = 0, message = "Total repair cost must be at least 0")
     private Double totalRepairCost;
 
     @NotNull(message = "Repair request date is required")

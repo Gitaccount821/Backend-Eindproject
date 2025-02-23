@@ -11,11 +11,9 @@ public class Authority implements Serializable {
 
     @Id
     @Column(nullable = false)
-    @NotBlank(message = "Username cannot be empty")
     private String username;
 
     @Column(nullable = false)
-    @NotBlank(message = "Authority cannot be empty")
     private String authority;
 
     public Authority() {

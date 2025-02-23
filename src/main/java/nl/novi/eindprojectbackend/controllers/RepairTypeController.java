@@ -28,7 +28,7 @@ public class RepairTypeController {
 
     private void validateRepairType(String name, Object costObj) {
         if (name != null && name.trim().isEmpty()) {
-            throw new BadRequestException("Repair type name cannot be empty.");
+            throw new BadRequestException("Name", true);
         }
 
         if (costObj != null) {
