@@ -1,13 +1,11 @@
 package nl.novi.eindprojectbackend.controllers;
 
 import nl.novi.eindprojectbackend.dtos.CarDto;
-import nl.novi.eindprojectbackend.dtos.RepairDto;
 import nl.novi.eindprojectbackend.exceptions.*;
 import nl.novi.eindprojectbackend.mappers.CarMapper;
 import nl.novi.eindprojectbackend.models.*;
 import nl.novi.eindprojectbackend.services.*;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -25,16 +23,10 @@ import jakarta.validation.Valid;
 public class CarController {
 
     private final CarService carService;
-    private final RepairService repairService;
-    private final PartService partService;
-    private final RepairTypeService repairTypeService;
     private final CustomUserDetailsService userDetailsService;
 
-    public CarController(CarService carService, RepairService repairService, PartService partService, RepairTypeService repairTypeService, CustomUserDetailsService userDetailsService) {
+    public CarController(CarService carService, CustomUserDetailsService userDetailsService) {
         this.carService = carService;
-        this.repairService = repairService;
-        this.partService = partService;
-        this.repairTypeService = repairTypeService;
         this.userDetailsService = userDetailsService;
     }
 
@@ -119,106 +111,6 @@ public class CarController {
         }
 
         return ResponseEntity.ok(CarMapper.toDto(car));
-    }
-
-    @PostMapping(value = "/{carId}/repairs", consumes = "application/json", produces = "application/json")
-    public Object addRepairToCar(@PathVariable Long carId, @RequestBody RepairDto repairDto) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
-        if (auth.getAuthorities().stream().noneMatch(a -> a.getAuthority().equals("ROLE_MONTEUR"))) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(null);
-        }
-
-        try {
-            Car car = carService.getCarById(carId)
-                    .orElseThrow(() -> new RecordNotFoundException("Car", carId));
-
-            if (repairDto.getRepairTypeId() == null) {
-                throw new BadRequestException("Repair type ID is required.");
-            }
-
-            RepairType repairType = repairTypeService.getRepairTypeById(repairDto.getRepairTypeId())
-                    .orElseThrow(() -> new RecordNotFoundException("Repair Type", repairDto.getRepairTypeId()));
-
-            Repair repair = new Repair();
-            repair.setRepairType(repairType);
-            repair.setCar(car);
-
-            String repairRequestDate = repairDto.getRepairRequestDate();
-            if (repairRequestDate != null && !repairRequestDate.isEmpty()) {
-                SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
-                try {
-                    repair.setRepairRequestDate(sdf.parse(repairRequestDate));
-                } catch (Exception e) {
-                    throw new BadRequestException("Invalid repair request date format. Use dd-MM-yyyy.");
-                }
-            } else {
-                throw new BadRequestException("Repair Request Date", true);
-            }
-
-            String repairDate = repairDto.getRepairDate();
-            if (repairDate != null && !repairDate.isEmpty()) {
-                SimpleDateFormat sdf = new SimpleDateFormat("dd-MM-yyyy");
-                try {
-                    repair.setRepairDate(sdf.parse(repairDate));
-                } catch (Exception e) {
-                    throw new BadRequestException("Invalid repair date format. Use dd-MM-yyyy.");
-                }
-            } else {
-                throw new BadRequestException("Repair date", true);
-            }
-
-            double totalCost = repairType.getCost();
-
-            if (repairDto.getPartIds() != null && !repairDto.getPartIds().isEmpty()) {
-                repair.setParts(repairDto.getPartIds().stream()
-                        .map(partId -> partService.getPartById(partId)
-                                .orElseThrow(() -> new RecordNotFoundException("Part", partId)))
-                        .collect(Collectors.toList()));
-
-                for (Part part : repair.getParts()) {
-                    totalCost += part.getPrice();
-                    part.setStock(part.getStock() - 1);
-                    partService.updatePart(part);
-                }
-            }
-
-            repair.setTotalRepairCost(totalCost);
-            repairService.addRepair(repair);
-            car.getRepairs().add(repair);
-            car.updateTotalRepairCost();
-            carService.updateCar(car.getId(), car);
-
-            return ResponseEntity.ok(CarMapper.toDto(car));
-        } catch (BadRequestException e) {
-            throw new BadRequestException(e.getMessage());
-        } catch (Exception e) {
-            throw new InternalServerException("Car does not exist");
-        }
-    }
-
-    @PatchMapping("/{carId}/repairs/{repairId}")
-    public ResponseEntity<?> patchRepair(
-            @PathVariable Long carId,
-            @PathVariable Long repairId,
-            @RequestBody Map<String, Object> updates) {
-
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-
-        if (auth.getAuthorities().stream().noneMatch(a -> a.getAuthority().equals("ROLE_MONTEUR"))) {
-            throw new ForbiddenActionException(getUserRole(auth), "update repairs");
-        }
-
-        try {
-            Repair updatedRepair = repairService.patchRepair(carId, repairId, updates);
-            return ResponseEntity.ok(new RepairDto(updatedRepair));
-        } catch (RecordNotFoundException e) {
-            throw new RecordNotFoundException("Repair", repairId);
-        } catch (BadRequestException e) {
-            throw new BadRequestException(e.getMessage());
-        } catch (Exception e) {
-            throw new InternalServerException("Error updating repair.");
-        }
     }
 
     @PatchMapping("/{id}")
