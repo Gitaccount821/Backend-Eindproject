@@ -33,7 +33,7 @@ public class CarService {
 
     public Car addCar(Car car, String ownerUsername) {
         User owner = userRepository.findById(ownerUsername)
-                .orElseThrow(() -> new BadRequestException("Invalid ownerUsername: No such user exists."));
+                .orElseThrow(() -> new BadRequestException("User not found"));
         car.setOwner(owner);
         return carRepository.save(car);
     }

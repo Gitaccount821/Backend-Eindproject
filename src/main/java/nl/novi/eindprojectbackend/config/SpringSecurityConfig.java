@@ -53,8 +53,6 @@ public class SpringSecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> {})
                 .authorizeHttpRequests(auth -> auth
-
-                        // Deze endpoints hun roll classification kan waarschijnlijker schoner, maar eraan zitten heeft vaker endpoints gebroken. Wegens deadline durf ik hier niet verder aan te komen.
                         // --- Public Endpoints ---
                         .requestMatchers(HttpMethod.POST, "/authenticate").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users/register").permitAll()
@@ -65,9 +63,7 @@ public class SpringSecurityConfig {
                         // --- Repair Management ---
                         .requestMatchers(HttpMethod.GET, "/api/repair-types/**").hasAnyRole("MONTEUR", "MEDEWERKER")
                         .requestMatchers("/api/repair-types/**").hasRole("MONTEUR")
-                        .requestMatchers("/api/cars/{carId}/repairs").hasRole("MONTEUR")
-                        .requestMatchers("/api/cars/{carId}/repairs/**").hasRole("MONTEUR")
-                        .requestMatchers("/api/repairs/**").hasAnyRole("MONTEUR", "MEDEWERKER")
+                        .requestMatchers("/api/repairs/**").hasRole("MONTEUR")  // ⬅️ Enforces access control on repairs
 
                         // --- PDF Management ---
                         .requestMatchers("/api/pdfs/download/**").hasAnyRole("MONTEUR", "KLANT", "MEDEWERKER")
@@ -78,9 +74,7 @@ public class SpringSecurityConfig {
                         .requestMatchers("/api/parts/**").hasAnyRole("MONTEUR", "MEDEWERKER")
 
                         // --- Car Management ---
-
                         .requestMatchers(HttpMethod.GET, "/api/cars/{carId}").hasAnyRole("MONTEUR", "MEDEWERKER", "KLANT")
-                        .requestMatchers(HttpMethod.GET, "/api/cars/{carId}/repairs").hasAnyRole("MONTEUR", "MEDEWERKER", "KLANT")
                         .requestMatchers("/api/cars/**").hasAnyRole("MEDEWERKER", "MONTEUR")
 
                         .anyRequest().authenticated()

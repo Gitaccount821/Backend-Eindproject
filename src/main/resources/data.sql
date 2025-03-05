@@ -45,6 +45,5 @@ INSERT INTO repair_parts (repair_id, parts_id) VALUES
                                                    (1, 1),  -- Engine (1500.0)
                                                    (1, 2);  -- Brake Pads (250.0)
 
--- 🔹 Fix Auto-Increment Issues 🚀
 SELECT setval('car_id_seq', (SELECT MAX(id) FROM car));
 SELECT setval('repair_id_seq', (SELECT MAX(id) FROM repair));
