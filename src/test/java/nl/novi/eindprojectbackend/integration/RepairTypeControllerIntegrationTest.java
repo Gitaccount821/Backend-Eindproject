@@ -22,12 +22,11 @@ class RepairTypeControllerIntegrationTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-
     private String getAuthToken(String username, String password) throws Exception {
         String loginJson = """
         {
-            "username": "monteur1",
-            "password": "Monteur"
+            "username": "%s",
+            "password": "%s"
         }
         """.formatted(username, password);
 
@@ -44,7 +43,7 @@ class RepairTypeControllerIntegrationTest {
 
     @Test
     void testRepairTypeCRUDOperations() throws Exception {
-        String token = getAuthToken("medewerker1", "Medewerker");
+        String token = getAuthToken("monteur1", "Monteur");
 
 
         String repairTypeJson = """
@@ -93,6 +92,21 @@ class RepairTypeControllerIntegrationTest {
                 .andExpect(jsonPath("$.name").value("Advanced Brake Repair"))
                 .andExpect(jsonPath("$.cost").value(200.00));
 
+
+        String patchRepairTypeJson = """
+{
+    "cost": 220.00,
+    "description": "Updated description"
+}
+""";
+
+
+        mockMvc.perform(patch("/api/repair-types/" + repairTypeId)
+                        .header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(patchRepairTypeJson))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.cost").value(220.00));
 
         mockMvc.perform(delete("/api/repair-types/" + repairTypeId)
                         .header("Authorization", "Bearer " + token))

@@ -1,7 +1,6 @@
 package nl.novi.eindprojectbackend.models;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.NotNull;
 
 @Entity
 public class Part {
@@ -12,10 +11,10 @@ public class Part {
 
     private String name;
 
-    @NotNull(message = "Price is required")
+
     private Double price;
 
-    @NotNull(message = "Stock is required")
+
     private Integer stock;
 
     public Part() {}

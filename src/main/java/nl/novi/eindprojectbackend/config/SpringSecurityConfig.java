@@ -75,7 +75,10 @@ public class SpringSecurityConfig {
 
                         // --- Car Management ---
                         .requestMatchers(HttpMethod.GET, "/api/cars/{carId}").hasAnyRole("MONTEUR", "MEDEWERKER", "KLANT")
+                        .requestMatchers(HttpMethod.POST, "/api/cars/**").hasAnyRole("MEDEWERKER", "MONTEUR")
+                        .requestMatchers(HttpMethod.GET, "/api/cars/{carId}").hasAnyRole("MONTEUR", "MEDEWERKER", "KLANT")
                         .requestMatchers("/api/cars/**").hasAnyRole("MEDEWERKER", "MONTEUR")
+
 
                         .anyRequest().authenticated()
                 )

@@ -1,5 +1,7 @@
 package nl.novi.eindprojectbackend.service;
 
+import nl.novi.eindprojectbackend.exceptions.BadRequestException;
+import nl.novi.eindprojectbackend.exceptions.RecordNotFoundException;
 import nl.novi.eindprojectbackend.models.RepairType;
 import nl.novi.eindprojectbackend.repositories.RepairTypeRepository;
 import nl.novi.eindprojectbackend.services.RepairTypeService;
@@ -37,6 +39,7 @@ class RepairTypeServiceTest {
         testRepairType.setDescription("Basic oil change service");
     }
 
+
     @Test
     void testAddRepairType_ShouldSaveAndReturnRepairType() {
         when(repairTypeRepository.save(any(RepairType.class))).thenReturn(testRepairType);
@@ -70,13 +73,13 @@ class RepairTypeServiceTest {
         verify(repairTypeRepository, times(1)).findById(1L);
     }
 
+
     @Test
-    void testGetRepairTypeById_ShouldReturnEmpty_WhenNotExists() {
+    void testGetRepairTypeById_ShouldThrowException_WhenNotExists() {
         when(repairTypeRepository.findById(1L)).thenReturn(Optional.empty());
 
-        Optional<RepairType> result = repairTypeService.getRepairTypeById(1L);
+        assertThrows(RecordNotFoundException.class, () -> repairTypeService.getRepairTypeById(1L));
 
-        assertFalse(result.isPresent());
         verify(repairTypeRepository, times(1)).findById(1L);
     }
 
@@ -95,7 +98,7 @@ class RepairTypeServiceTest {
         assertEquals("Brake Pad Change", result.getName());
         assertEquals(120.0, result.getCost());
         verify(repairTypeRepository, times(1)).findById(1L);
-        verify(repairTypeRepository, times(1)).save(testRepairType);
+        verify(repairTypeRepository, times(1)).save(any(RepairType.class));
     }
 
     @Test
@@ -105,7 +108,7 @@ class RepairTypeServiceTest {
 
         when(repairTypeRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> repairTypeService.updateRepairType(1L, updatedRepairType));
+        assertThrows(RecordNotFoundException.class, () -> repairTypeService.updateRepairType(1L, updatedRepairType));
 
         verify(repairTypeRepository, times(1)).findById(1L);
     }
@@ -117,42 +120,56 @@ class RepairTypeServiceTest {
 
         Map<String, Object> updates = Map.of(
                 "name", "Transmission Repair",
-                "cost", 500.0
+                "cost", 500.0,
+                "description", "Transmission repair service"
         );
 
         RepairType patchedRepairType = repairTypeService.patchRepairType(1L, updates);
 
         assertEquals("Transmission Repair", patchedRepairType.getName());
         assertEquals(500.0, patchedRepairType.getCost());
+        assertEquals("Transmission repair service", patchedRepairType.getDescription());
 
         verify(repairTypeRepository, times(1)).findById(1L);
-        verify(repairTypeRepository, times(1)).save(testRepairType);
+        verify(repairTypeRepository, times(1)).save(any(RepairType.class));
     }
 
     @Test
     void testPatchRepairType_ShouldThrowException_WhenNotExists() {
         when(repairTypeRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThrows(IllegalArgumentException.class, () -> repairTypeService.patchRepairType(1L, Map.of("cost", 500.0)));
+        assertThrows(RecordNotFoundException.class, () -> repairTypeService.patchRepairType(1L, Map.of("cost", 500.0)));
 
         verify(repairTypeRepository, times(1)).findById(1L);
     }
 
     @Test
+    void testPatchRepairType_ShouldThrowException_WhenCostIsInvalid() {
+        when(repairTypeRepository.findById(1L)).thenReturn(Optional.of(testRepairType));
+
+        assertThrows(BadRequestException.class, () -> repairTypeService.patchRepairType(1L, Map.of("cost", -10.0)));
+
+        verify(repairTypeRepository, times(1)).findById(1L);
+        verify(repairTypeRepository, never()).save(any(RepairType.class));
+    }
+
+    @Test
     void testDeleteRepairType_ShouldCallRepositoryDeleteById() {
+        when(repairTypeRepository.existsById(1L)).thenReturn(true);
         doNothing().when(repairTypeRepository).deleteById(1L);
 
         repairTypeService.deleteRepairType(1L);
 
+        verify(repairTypeRepository, times(1)).existsById(1L);
         verify(repairTypeRepository, times(1)).deleteById(1L);
     }
 
     @Test
-    void testDeleteRepairType_ShouldNotThrow_WhenIdDoesNotExist() {
-        doNothing().when(repairTypeRepository).deleteById(999L);
+    void testDeleteRepairType_ShouldThrowException_WhenIdDoesNotExist() {
+        when(repairTypeRepository.existsById(999L)).thenReturn(false);
 
-        assertDoesNotThrow(() -> repairTypeService.deleteRepairType(999L));
+        assertThrows(RecordNotFoundException.class, () -> repairTypeService.deleteRepairType(999L));
 
-        verify(repairTypeRepository, times(1)).deleteById(999L);
+        verify(repairTypeRepository, times(1)).existsById(999L);
     }
 }

@@ -12,7 +12,7 @@ public class RepairType {
 
     private String name;
 
-    @NotNull(message = "Cost is required")
+    @NotNull
     private Double cost;
 
     private String description;

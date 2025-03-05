@@ -90,7 +90,9 @@ public class RepairTypeController {
 
         String name = updates.containsKey("name") ? (String) updates.get("name") : null;
         Object costObj = updates.get("cost");
-        String description = updates.containsKey("description") ? (String) updates.get("description") : null;
+        if (updates.containsKey("description")) {
+            updates.get("description");
+        }
 
         Double cost = null;
         if (costObj instanceof Integer) {
@@ -103,7 +105,11 @@ public class RepairTypeController {
 
         validateRepairType(name, cost);
 
-        updates.put("description", description);
+        if (!updates.containsKey("description")) {
+            updates.put("description", repairTypeService.getRepairTypeById(id)
+                    .orElseThrow(() -> new RecordNotFoundException("Repair Type", id))
+                    .getDescription());
+        }
 
         RepairType updatedRepairType = repairTypeService.patchRepairType(id, updates);
         return ResponseEntity.ok(RepairTypeMapper.toDto(updatedRepairType));
@@ -117,4 +123,5 @@ public class RepairTypeController {
         repairTypeService.deleteRepairType(id);
         return ResponseEntity.noContent().build();
     }
+
 }

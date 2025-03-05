@@ -14,6 +14,10 @@ import java.util.stream.Collectors;
 public class CarMapper {
 
     public static CarDto toDto(Car car) {
+
+        double totalRepairCost = car.getTotalRepairCost() != null ? car.getTotalRepairCost() : 0.0;
+        double totalPriceWithBTW = totalRepairCost * 1.21;
+
         return new CarDto(
                 car.getId(),
                 car.getCarType(),
@@ -22,7 +26,8 @@ public class CarMapper {
                         .map(CarMapper::mapRepairToDto)
                         .collect(Collectors.toList()) : List.of(),
                 car.getTotalRepairCost(),
-                car.getRepairRequestDate()
+                car.getRepairRequestDate(),
+                totalPriceWithBTW
         );
     }
 
