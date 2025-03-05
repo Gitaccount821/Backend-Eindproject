@@ -12,10 +12,10 @@ public class Part {
 
     private String name;
 
-    @NotNull(message = "Price is required")
+
     private Double price;
 
-    @NotNull(message = "Stock is required")
+
     private Integer stock;
 
     public Part() {}

@@ -27,7 +27,6 @@ public class Repair {
     @NotNull(message = "Total repair cost cannot be null")
     private Double totalRepairCost;
 
-    @NotNull(message = "Repair request date is required")
     private Date repairRequestDate;
 
     private Date repairDate;

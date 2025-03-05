@@ -76,9 +76,12 @@ public class RepairController {
             carService.updateCar(car.getId(), car);
 
             return ResponseEntity.ok(new RepairDto(repair));
+        } catch (RecordNotFoundException | BadRequestException e) {
+            throw e;
         } catch (Exception e) {
-            throw new InternalServerException("Error processing repair request.");
+            throw new InternalServerException("Unexpected internal error occurred.");
         }
+
     }
 
     @PatchMapping("/{carId}/{repairId}")
@@ -86,10 +89,10 @@ public class RepairController {
         try {
             Repair updatedRepair = repairService.patchRepair(carId, repairId, updates);
             return ResponseEntity.ok(new RepairDto(updatedRepair));
-        } catch (RecordNotFoundException e) {
-            throw new RecordNotFoundException("Repair", repairId);
+        } catch (RecordNotFoundException | BadRequestException e) {
+            throw e;
         } catch (Exception e) {
-            throw new InternalServerException("Error updating repair. Please make sure there are no empty values");
+            throw new InternalServerException("Unexpected internal error occurred.");
         }
     }
 }

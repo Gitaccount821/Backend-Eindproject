@@ -20,10 +20,16 @@ public class PartService {
     }
 
     private void validatePart(Part part) {
-        if (part.getPrice() == null || part.getPrice() < 0) {
+        if (part.getPrice() == null) {
+            throw new BadRequestException("Price cannot be null.");
+        }
+        if (part.getPrice() < 0) {
             throw new BadRequestException("Price must be a positive value.");
         }
-        if (part.getStock() == null || part.getStock() < 0) {
+        if (part.getStock() == null) {
+            throw new BadRequestException("Stock cannot be null.");
+        }
+        if (part.getStock() < 0) {
             throw new BadRequestException("Stock must be a non-negative value.");
         }
     }

@@ -3,14 +3,26 @@ INSERT INTO users (username, password, enabled, email) VALUES
                                                            ('monteur1', '$2a$10$ZSwUaC8niKMocp7a905u0.mOChOYvgoUmYlQ0Y4k8TcMiwzlbnJ8W', true, 'monteur1@example.com'),
                                                            ('medewerker1', '$2a$10$/HAlRCERguEDw0FwpoPhbe8ptj7xJuYD.k1UN7piwGzjLaYaxcGSe', true, 'medewerker1@example.com'),
                                                            ('klant1', '$2a$10$K4r9Q8GLloQmzmweFFApV.7K.xWYLoEIdrCIJqyKHtaIqr49N0ZXO', true, 'klant1@example.com'),
-                                                           ('klant2', '$2a$10$57b4yTb9WDwr/Sa8azosiOBiddn4afScJBl27Cflfq.qdH4fiKkkG', true, 'klant2@example.com');
+                                                           ('klant2', '$2a$10$57b4yTb9WDwr/Sa8azosiOBiddn4afScJBl27Cflfq.qdH4fiKkkG', true, 'klant2@example.com'),
+
+                                                           -- 3 testrollen om zelf een Password voor te maken
+                                                           ('medewerkertest', 'PasswordEncoder-password-here', true, 'medewerkertest@example.com'),
+                                                           ('monteurtest', 'PasswordEncoder-password-here', true, 'monteurtest@example.com'),
+                                                           ('klanttest', 'PasswordEncoder-password-here', true, 'klanttest@example.com');
+
 
 -- 🔹 Authorities
 INSERT INTO authorities (username, authority) VALUES
                                                   ('monteur1', 'ROLE_MONTEUR'),
                                                   ('medewerker1', 'ROLE_MEDEWERKER'),
                                                   ('klant1', 'ROLE_KLANT'),
-                                                  ('klant2', 'ROLE_KLANT');
+                                                  ('klant2', 'ROLE_KLANT'),
+
+                                                  -- De 3 testrollen hun Roles
+                                                    ('medewerkertest', 'ROLE_MEDEWERKER'),
+                                                  ('monteurtest', 'ROLE_MONTEUR'),
+                                                  ('klanttest', 'ROLE_KLANT');
+
 
 -- 🔹 Parts
 INSERT INTO part (id, name, price, stock) VALUES
@@ -45,5 +57,11 @@ INSERT INTO repair_parts (repair_id, parts_id) VALUES
                                                    (1, 1),  -- Engine (1500.0)
                                                    (1, 2);  -- Brake Pads (250.0)
 
+-- ID sequences reset
+SELECT setval('repair_type_id_seq', (SELECT MAX(id) FROM repair_type));
 SELECT setval('car_id_seq', (SELECT MAX(id) FROM car));
 SELECT setval('repair_id_seq', (SELECT MAX(id) FROM repair));
+SELECT setval('part_id_seq', (SELECT MAX(id) FROM part));
+SELECT setval('pdf_attachment_id_seq', (SELECT MAX(id) FROM pdf_attachment));
+
+

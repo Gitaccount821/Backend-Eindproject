@@ -3,8 +3,11 @@ package nl.novi.eindprojectbackend.dtos;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import java.util.List;
 
+
+
 public class CarDto {
-    private final Long id;
+
+    private Long id;
 
     private String carType;
 
@@ -13,6 +16,9 @@ public class CarDto {
     private Double totalRepairCost;
     private String repairRequestDate;
 
+    // dto voor testing
+    public CarDto(){
+    }
 
     @JsonCreator
     public CarDto(Long id, String carType, String ownerUsername,
