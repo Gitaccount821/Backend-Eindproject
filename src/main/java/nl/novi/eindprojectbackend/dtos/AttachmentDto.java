@@ -4,14 +4,8 @@ package nl.novi.eindprojectbackend.dtos;
 public class AttachmentDto {
     private Long id;
 
-    private String fileName;
-
-    private String filePath;
-
-    public AttachmentDto(Long id, String fileName, String filePath) {
+    public AttachmentDto(Long id) {
         this.id = id;
-        this.fileName = fileName;
-        this.filePath = filePath;
     }
 
 
@@ -21,14 +15,6 @@ public class AttachmentDto {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public String getFileName() {
-        return fileName;
-    }
-
-    public String getFilePath() {
-        return filePath;
     }
 
 }

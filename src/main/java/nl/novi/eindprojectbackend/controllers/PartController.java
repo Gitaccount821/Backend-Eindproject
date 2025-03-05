@@ -80,7 +80,7 @@ public class PartController {
     public ResponseEntity<?> updatePart(@PathVariable Long id, @RequestBody Part partDetails) {
         try {
 
-            Part existingPart = partService.getPartById(id)
+            partService.getPartById(id)
                     .orElseThrow(() -> new RecordNotFoundException("Part", id));
 
             validatePart(partDetails.getName(), partDetails.getPrice(), partDetails.getStock());
@@ -101,7 +101,7 @@ public class PartController {
     public ResponseEntity<?> patchPart(@PathVariable Long id, @RequestBody Map<String, Object> updates) {
         try {
 
-            Part existingPart = partService.getPartById(id)
+            partService.getPartById(id)
                     .orElseThrow(() -> new RecordNotFoundException("Part", id));
 
             validatePart(

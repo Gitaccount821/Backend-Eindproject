@@ -31,7 +31,7 @@ public class ExceptionController {
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<Map<String, Object>> handleDataIntegrityViolationException(DataIntegrityViolationException ex, WebRequest request) {
+    public ResponseEntity<Map<String, Object>> handleDataIntegrityViolationException(WebRequest request) {
         return createErrorResponse(HttpStatus.BAD_REQUEST, "Cannot delete Repair Type because it is used in existing Repairs.", request);
     }
 

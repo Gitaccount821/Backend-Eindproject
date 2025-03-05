@@ -7,7 +7,6 @@ import nl.novi.eindprojectbackend.models.Car;
 import nl.novi.eindprojectbackend.models.PdfAttachment;
 import nl.novi.eindprojectbackend.services.CarService;
 import nl.novi.eindprojectbackend.services.PdfAttachmentService;
-import nl.novi.eindprojectbackend.services.CustomUserDetailsService;
 
 import org.springframework.http.*;
 import org.springframework.security.core.Authentication;
@@ -35,12 +34,10 @@ public class PdfController {
 
     private final PdfAttachmentService pdfAttachmentService;
     private final CarService carService;
-    private final CustomUserDetailsService userDetailsService;
 
-    public PdfController(PdfAttachmentService pdfAttachmentService, CarService carService, CustomUserDetailsService userDetailsService) {
+    public PdfController(PdfAttachmentService pdfAttachmentService, CarService carService) {
         this.pdfAttachmentService = pdfAttachmentService;
         this.carService = carService;
-        this.userDetailsService = userDetailsService;
     }
 
     @PostMapping(value = "/upload/{carId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

@@ -24,7 +24,7 @@ public class Repair {
     @ManyToMany
     private List<Part> parts;
 
-    @NotNull(message = "Total repair cost cannot be null")
+    @NotNull
     private Double totalRepairCost;
 
     private Date repairRequestDate;

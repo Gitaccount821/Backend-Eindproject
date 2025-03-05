@@ -39,12 +39,6 @@ public class CarController {
 
     @PostMapping(consumes = "application/json")
     public ResponseEntity<?> addCar(@Valid @RequestBody CarDto carDto) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String userRole = getUserRole(auth);
-
-        if (userRole.equals("KLANT")) {
-            throw new ForbiddenActionException(userRole, "may not create cars");
-        }
 
         User owner = userDetailsService.findUserByUsername(carDto.getOwnerUsername());
         if (owner == null) {

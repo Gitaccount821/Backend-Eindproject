@@ -90,7 +90,9 @@ public class RepairTypeController {
 
         String name = updates.containsKey("name") ? (String) updates.get("name") : null;
         Object costObj = updates.get("cost");
-        String description = updates.containsKey("description") ? (String) updates.get("description") : null;
+        if (updates.containsKey("description")) {
+            updates.get("description");
+        }
 
         Double cost = null;
         if (costObj instanceof Integer) {

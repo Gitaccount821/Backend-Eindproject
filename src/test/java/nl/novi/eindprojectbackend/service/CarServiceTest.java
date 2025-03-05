@@ -158,7 +158,7 @@ class CarServiceTest {
 
     @Test
     void testUpdateCar_WithCarDto_ShouldThrowException_WhenCarTypeIsMissing() {
-        CarDto carDto = new CarDto(null, null, "15-03-2025", null, null, "user1");
+        CarDto carDto = new CarDto(null, null, "15-03-2025", null, null, "user1", null);
 
         assertThrows(BadRequestException.class, () -> carService.updateCar(1L, carDto));
     }

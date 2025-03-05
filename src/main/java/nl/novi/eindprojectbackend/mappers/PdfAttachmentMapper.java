@@ -7,9 +7,7 @@ public class PdfAttachmentMapper {
 
     public static AttachmentDto toDto(PdfAttachment pdfAttachment) {
         return new AttachmentDto(
-                pdfAttachment.getId(),
-                pdfAttachment.getFileName(),
-                pdfAttachment.getFilePath()
+                pdfAttachment.getId()
         );
     }
 
