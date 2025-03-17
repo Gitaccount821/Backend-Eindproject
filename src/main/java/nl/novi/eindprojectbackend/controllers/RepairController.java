@@ -29,6 +29,7 @@ public class RepairController {
         this.repairTypeService = repairTypeService;
     }
 
+
     @PostMapping("/{carId}")
     public ResponseEntity<?> addRepairToCar(@PathVariable Long carId, @RequestBody RepairDto repairDto) {
         try {
@@ -65,7 +66,7 @@ public class RepairController {
                 for (Part part : repair.getParts()) {
                     totalCost += part.getPrice();
                     part.setStock(part.getStock() - 1);
-                    partService.updatePart(part);
+                    partService.updatePart(part.getId(), part);
                 }
             }
 
