@@ -6,6 +6,7 @@ import nl.novi.eindprojectbackend.mappers.RepairTypeMapper;
 import nl.novi.eindprojectbackend.models.RepairType;
 import nl.novi.eindprojectbackend.services.RepairTypeService;
 import nl.novi.eindprojectbackend.exceptions.BadRequestException;
+import nl.novi.eindprojectbackend.utils.ValidationUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -26,26 +27,11 @@ public class RepairTypeController {
         this.repairTypeService = repairTypeService;
     }
 
-    private void validateRepairType(String name, Object costObj) {
-        if (name != null && name.trim().isEmpty()) {
-            throw new BadRequestException("Name", true);
-        }
-
-        if (costObj != null) {
-            if (!(costObj instanceof Number)) {
-                throw new BadRequestException("Repair type cost must be a number.");
-            }
-
-            double cost = ((Number) costObj).doubleValue();
-            if (cost <= 0.0) {
-                throw new BadRequestException("Repair type cost must be greater than zero.");
-            }
-        }
-    }
-
     @PostMapping
     public ResponseEntity<RepairTypeDto> addRepairType(@RequestBody RepairTypeDto repairTypeDto) {
-        validateRepairType(repairTypeDto.getName(), repairTypeDto.getCost());
+
+        ValidationUtils.validateNotEmpty(repairTypeDto.getName(), "Repair type name");
+        ValidationUtils.validatePositiveNumber(repairTypeDto.getCost(), "Repair type cost");
 
         RepairType repairType = RepairTypeMapper.toEntity(repairTypeDto);
         RepairType newRepairType = repairTypeService.addRepairType(repairType);
@@ -69,7 +55,9 @@ public class RepairTypeController {
 
     @PutMapping("/{id}")
     public ResponseEntity<RepairTypeDto> updateRepairType(@PathVariable Long id, @RequestBody RepairTypeDto repairTypeDto) {
-        validateRepairType(repairTypeDto.getName(), repairTypeDto.getCost());
+
+        ValidationUtils.validateNotEmpty(repairTypeDto.getName(), "Repair type name");
+        ValidationUtils.validatePositiveNumber(repairTypeDto.getCost(), "Repair type cost");
 
         repairTypeService.getRepairTypeById(id)
                 .orElseThrow(() -> new RecordNotFoundException("Repair Type", id));
@@ -90,20 +78,14 @@ public class RepairTypeController {
 
         String name = updates.containsKey("name") ? (String) updates.get("name") : null;
         Object costObj = updates.get("cost");
-        if (updates.containsKey("description")) {
-            updates.get("description");
+
+        if (name != null) {
+            ValidationUtils.validateNotEmpty(name, "Repair type name");
         }
 
-        Double cost = null;
-        if (costObj instanceof Integer) {
-            cost = ((Integer) costObj).doubleValue();
-        } else if (costObj instanceof Double) {
-            cost = (Double) costObj;
-        } else if (costObj != null) {
-            throw new BadRequestException("Repair type cost must be a valid number.");
+        if (costObj != null) {
+            ValidationUtils.validatePositiveNumber(costObj, "Repair type cost");
         }
-
-        validateRepairType(name, cost);
 
         if (!updates.containsKey("description")) {
             updates.put("description", repairTypeService.getRepairTypeById(id)

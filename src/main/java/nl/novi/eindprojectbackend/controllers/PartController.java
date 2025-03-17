@@ -2,7 +2,8 @@ package nl.novi.eindprojectbackend.controllers;
 
 import nl.novi.eindprojectbackend.models.Part;
 import nl.novi.eindprojectbackend.services.PartService;
-import nl.novi.eindprojectbackend.exceptions.*;
+import nl.novi.eindprojectbackend.exceptions.RecordNotFoundException;
+import nl.novi.eindprojectbackend.utils.ValidationUtils;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,38 +21,12 @@ public class PartController {
         this.partService = partService;
     }
 
-    private void validatePart(String name, Object priceObj, Object stockObj) {
-        if (name != null && name.trim().isEmpty()) {
-            throw new BadRequestException("Part name", true);
-        }
-
-        if (priceObj != null) {
-            if (!(priceObj instanceof Number)) {
-                throw new BadRequestException("Price must be a number.");
-            }
-
-            double price = ((Number) priceObj).doubleValue();
-            if (price < 0.0) {
-                throw new BadRequestException("Price must be a positive value.");
-            }
-        }
-
-        if (stockObj != null) {
-            if (!(stockObj instanceof Number)) {
-                throw new BadRequestException("Stock must be a number.");
-            }
-
-            int stock = ((Number) stockObj).intValue();
-            if (stock < 0) {
-                throw new BadRequestException("Stock must be a non-negative value.");
-            }
-        }
-    }
-
     @PostMapping
     public ResponseEntity<?> addPart(@Valid @RequestBody Part part) {
 
-        validatePart(part.getName(), part.getPrice(), part.getStock());
+        ValidationUtils.validateNotEmpty(part.getName(), "Part name");
+        ValidationUtils.validatePositiveNumber(part.getPrice(), "Part price");
+        ValidationUtils.validateNonNegativeNumber(part.getStock(), "Part stock");
 
         Part savedPart = partService.addPart(part);
         return ResponseEntity.ok(savedPart);
@@ -77,7 +52,9 @@ public class PartController {
         partService.getPartById(id)
                 .orElseThrow(() -> new RecordNotFoundException("Part", id));
 
-        validatePart(partDetails.getName(), partDetails.getPrice(), partDetails.getStock());
+        ValidationUtils.validateNotEmpty(partDetails.getName(), "Part name");
+        ValidationUtils.validatePositiveNumber(partDetails.getPrice(), "Part price");
+        ValidationUtils.validateNonNegativeNumber(partDetails.getStock(), "Part stock");
 
         Part updatedPart = partService.updatePart(id, partDetails);
         return ResponseEntity.ok(updatedPart);
@@ -89,11 +66,17 @@ public class PartController {
         partService.getPartById(id)
                 .orElseThrow(() -> new RecordNotFoundException("Part", id));
 
-        validatePart(
-                updates.get("name") != null ? (String) updates.get("name") : null,
-                updates.get("price"),
-                updates.get("stock")
-        );
+        if (updates.containsKey("name")) {
+            ValidationUtils.validateNotEmpty((String) updates.get("name"), "Part name");
+        }
+
+        if (updates.containsKey("price")) {
+            ValidationUtils.validatePositiveNumber(updates.get("price"), "Part price");
+        }
+
+        if (updates.containsKey("stock")) {
+            ValidationUtils.validateNonNegativeNumber(updates.get("stock"), "Part stock");
+        }
 
         Part updatedPart = partService.patchPart(id, updates);
         return ResponseEntity.ok(updatedPart);
