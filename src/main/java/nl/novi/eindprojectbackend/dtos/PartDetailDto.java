@@ -1,11 +1,14 @@
 package nl.novi.eindprojectbackend.dtos;
 
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 public class PartDetailDto {
     private Long id;
 
 
+    @NotNull(message = "Name is required")
+    @Size(min = 1, message = "Name cannot be empty")
     private String name;
 
     @NotNull(message = "Price is required")
