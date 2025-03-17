@@ -60,25 +60,34 @@ public class SpringSecurityConfig {
                         // --- User Management ---
                         .requestMatchers(HttpMethod.POST, "/api/users/create-user").hasRole("MEDEWERKER")
 
-                        // --- Repair Management ---
+                        // --- Repair Types ---
                         .requestMatchers(HttpMethod.GET, "/api/repair-types/**").hasAnyRole("MONTEUR", "MEDEWERKER")
                         .requestMatchers("/api/repair-types/**").hasRole("MONTEUR")
-                        .requestMatchers("/api/repairs/**").hasRole("MONTEUR")  // ⬅️ Enforces access control on repairs
+
+                        // --- Repairs ---
+                        .requestMatchers("/api/repairs/**").hasRole("MONTEUR")
 
                         // --- PDF Management ---
                         .requestMatchers("/api/pdfs/download/**").hasAnyRole("MONTEUR", "KLANT", "MEDEWERKER")
                         .requestMatchers(HttpMethod.POST, "/api/pdfs/**").hasRole("KLANT")
                         .requestMatchers(HttpMethod.DELETE, "/api/pdfs/**").hasAnyRole("MONTEUR", "KLANT", "MEDEWERKER")
 
-                        // --- Parts Management ---
+                        // --- Parts ---
                         .requestMatchers("/api/parts/**").hasAnyRole("MONTEUR", "MEDEWERKER")
 
-                        // --- Car Management ---
-                        .requestMatchers(HttpMethod.GET, "/api/cars/{carId}").hasAnyRole("MONTEUR", "MEDEWERKER", "KLANT")
-                        .requestMatchers(HttpMethod.POST, "/api/cars/**").hasAnyRole("MEDEWERKER", "MONTEUR")
-                        .requestMatchers(HttpMethod.GET, "/api/cars/{carId}").hasAnyRole("MONTEUR", "MEDEWERKER", "KLANT")
-                        .requestMatchers("/api/cars/**").hasAnyRole("MEDEWERKER", "MONTEUR")
+                        // --- Cars ---
+                        // GET ALL CARS -> Monteur & Medewerker only (no Klant)
+                        .requestMatchers(HttpMethod.GET, "/api/cars").hasAnyRole("MONTEUR", "MEDEWERKER")
 
+                        // GET SPECIFIC CAR (Monteur, Medewerker, Klant)
+                        .requestMatchers(HttpMethod.GET, "/api/cars/{id}").hasAnyRole("MONTEUR", "MEDEWERKER", "KLANT")
+
+                        // POST CARS (Add Car) -> Monteur & Medewerker only
+                        .requestMatchers(HttpMethod.POST, "/api/cars/**").hasAnyRole("MONTEUR", "MEDEWERKER")
+
+                        // PATCH/DELETE CARS -> Monteur & Medewerker only
+                        .requestMatchers(HttpMethod.PATCH, "/api/cars/**").hasAnyRole("MONTEUR", "MEDEWERKER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/cars/**").hasAnyRole("MONTEUR", "MEDEWERKER")
 
                         .anyRequest().authenticated()
                 )
