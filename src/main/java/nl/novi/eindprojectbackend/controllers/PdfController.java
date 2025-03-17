@@ -1,4 +1,6 @@
-package nl.novi.eindprojectbackend.controllers;
+pdfcontrol:
+
+        package nl.novi.eindprojectbackend.controllers;
 
 import nl.novi.eindprojectbackend.dtos.AttachmentDto;
 import nl.novi.eindprojectbackend.exceptions.*;
