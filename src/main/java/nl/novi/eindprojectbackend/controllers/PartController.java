@@ -50,25 +50,20 @@ public class PartController {
 
     @PostMapping
     public ResponseEntity<?> addPart(@Valid @RequestBody Part part) {
-        try {
-            validatePart(part.getName(), part.getPrice(), part.getStock());
 
-            Part savedPart = partService.addPart(part);
-            return ResponseEntity.ok(savedPart);
+        validatePart(part.getName(), part.getPrice(), part.getStock());
 
-        } catch (BadRequestException e) {
-            throw new BadRequestException(e.getMessage());
-        } catch (Exception e) {
-            throw new InternalServerException("Error adding part.");
-        }
+        Part savedPart = partService.addPart(part);
+        return ResponseEntity.ok(savedPart);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Part> getPartById(@PathVariable Long id) {
-        return ResponseEntity.ok(
-                partService.getPartById(id)
-                        .orElseThrow(() -> new RecordNotFoundException("Part", id))
-        );
+
+        Part part = partService.getPartById(id)
+                .orElseThrow(() -> new RecordNotFoundException("Part", id));
+
+        return ResponseEntity.ok(part);
     }
 
     @GetMapping
@@ -78,53 +73,35 @@ public class PartController {
 
     @PutMapping("/{id}")
     public ResponseEntity<?> updatePart(@PathVariable Long id, @RequestBody Part partDetails) {
-        try {
 
-            partService.getPartById(id)
-                    .orElseThrow(() -> new RecordNotFoundException("Part", id));
+        partService.getPartById(id)
+                .orElseThrow(() -> new RecordNotFoundException("Part", id));
 
-            validatePart(partDetails.getName(), partDetails.getPrice(), partDetails.getStock());
+        validatePart(partDetails.getName(), partDetails.getPrice(), partDetails.getStock());
 
-            Part updatedPart = partService.updatePart(id, partDetails);
-            return ResponseEntity.ok(updatedPart);
-
-        } catch (RecordNotFoundException e) {
-            throw new RecordNotFoundException("Part", id);
-        } catch (BadRequestException e) {
-            throw new BadRequestException(e.getMessage());
-        } catch (Exception e) {
-            throw new InternalServerException("Error updating part.");
-        }
+        Part updatedPart = partService.updatePart(id, partDetails);
+        return ResponseEntity.ok(updatedPart);
     }
 
     @PatchMapping("/{id}")
     public ResponseEntity<?> patchPart(@PathVariable Long id, @RequestBody Map<String, Object> updates) {
-        try {
 
-            partService.getPartById(id)
-                    .orElseThrow(() -> new RecordNotFoundException("Part", id));
+        partService.getPartById(id)
+                .orElseThrow(() -> new RecordNotFoundException("Part", id));
 
-            validatePart(
-                    updates.get("name") != null ? (String) updates.get("name") : null,
-                    updates.get("price"),
-                    updates.get("stock")
-            );
+        validatePart(
+                updates.get("name") != null ? (String) updates.get("name") : null,
+                updates.get("price"),
+                updates.get("stock")
+        );
 
-            Part updatedPart = partService.patchPart(id, updates);
-            return ResponseEntity.ok(updatedPart);
-
-        } catch (RecordNotFoundException e) {
-            throw new RecordNotFoundException("Part", id);
-        } catch (BadRequestException e) {
-            throw new BadRequestException(e.getMessage());
-        } catch (Exception e) {
-            throw new InternalServerException("Error updating part.");
-        }
+        Part updatedPart = partService.patchPart(id, updates);
+        return ResponseEntity.ok(updatedPart);
     }
-
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deletePart(@PathVariable Long id) {
+
         partService.getPartById(id)
                 .orElseThrow(() -> new RecordNotFoundException("Part", id));
 
