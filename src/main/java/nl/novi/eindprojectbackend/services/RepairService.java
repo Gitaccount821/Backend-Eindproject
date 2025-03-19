@@ -1,5 +1,6 @@
 package nl.novi.eindprojectbackend.services;
 
+import nl.novi.eindprojectbackend.dtos.RepairDto;
 import nl.novi.eindprojectbackend.exceptions.BadRequestException;
 import nl.novi.eindprojectbackend.exceptions.RecordNotFoundException;
 import nl.novi.eindprojectbackend.models.Car;
@@ -11,6 +12,7 @@ import nl.novi.eindprojectbackend.repositories.RepairRepository;
 import nl.novi.eindprojectbackend.repositories.RepairTypeRepository;
 import org.springframework.stereotype.Service;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -25,11 +27,69 @@ public class RepairService {
     private final RepairTypeRepository repairTypeRepository;
     private final PartService partService;
 
-    public RepairService(CarRepository carRepository, RepairRepository repairRepository, RepairTypeRepository repairTypeRepository, PartService partService) {
+    public RepairService(CarRepository carRepository,
+                         RepairRepository repairRepository,
+                         RepairTypeRepository repairTypeRepository,
+                         PartService partService) {
         this.carRepository = carRepository;
         this.repairRepository = repairRepository;
         this.repairTypeRepository = repairTypeRepository;
         this.partService = partService;
+    }
+
+    public Repair addRepairToCar(Long carId, RepairDto repairDto) {
+
+        Car car = carRepository.findById(carId)
+                .orElseThrow(() -> new RecordNotFoundException("Car", carId));
+
+        if (repairDto.getRepairTypeId() == null) {
+            throw new BadRequestException("Repair type ID is required.");
+        }
+
+        RepairType repairType = repairTypeRepository.findById(repairDto.getRepairTypeId())
+                .orElseThrow(() -> new RecordNotFoundException("Repair Type", repairDto.getRepairTypeId()));
+
+        Repair repair = new Repair();
+        repair.setCar(car);
+        repair.setRepairType(repairType);
+
+        repair.setRepairRequestDate(parseDate(repairDto.getRepairRequestDate(), "Repair request date"));
+        repair.setRepairDate(parseDate(repairDto.getRepairDate(), "Repair date"));
+
+
+        double totalCost = repairType.getCost();
+
+
+        if (repairDto.getPartIds() != null && !repairDto.getPartIds().isEmpty()) {
+            List<Part> parts = repairDto.getPartIds().stream()
+                    .map(partId -> partService.getPartById(partId)
+                            .orElseThrow(() -> new RecordNotFoundException("Part", partId)))
+                    .collect(Collectors.toList());
+
+            for (Part part : parts) {
+                if (part.getStock() <= 0) {
+                    throw new BadRequestException("Part " + part.getName() + " is out of stock!");
+                }
+
+                part.setStock(part.getStock() - 1);
+                partService.updatePart(part.getId(), part);
+
+                totalCost += part.getPrice();
+            }
+
+            repair.setParts(parts);
+        }
+
+        repair.setTotalRepairCost(totalCost);
+
+
+        Repair savedRepair = repairRepository.save(repair);
+
+        car.getRepairs().add(savedRepair);
+        car.updateTotalRepairCost();
+        carRepository.save(car);
+
+        return savedRepair;
     }
 
     public Repair patchRepair(Long carId, Long repairId, Map<String, Object> updates) {
@@ -43,27 +103,22 @@ public class RepairService {
 
         if (updates.containsKey("repairDate")) {
             String repairDate = (String) updates.get("repairDate");
-            if (repairDate.isEmpty()) {
-                throw new BadRequestException("Repair date", true);
-            }
-            repair.setRepairDate(parseDate(repairDate, "Repair date"));
+            repair.setRepairDate(parseDate(repairDate, "repairDate"));
         }
 
         if (updates.containsKey("repairRequestDate")) {
             String repairRequestDate = (String) updates.get("repairRequestDate");
-            if (repairRequestDate.isEmpty()) {
-                throw new BadRequestException("Repair request date", true);
-            }
-            repair.setRepairRequestDate(parseDate(repairRequestDate, "Repair request date"));
+            repair.setRepairRequestDate(parseDate(repairRequestDate, "repairRequestDate"));
         }
 
         if (updates.containsKey("repairTypeId")) {
             Object repairTypeIdObj = updates.get("repairTypeId");
             if (!(repairTypeIdObj instanceof Number)) {
-                throw new BadRequestException("Repair type ID must be a valid number.");
+                throw new BadRequestException("Repair type ID must be a number.");
             }
-            RepairType repairType = repairTypeRepository.findById(((Number) repairTypeIdObj).longValue())
-                    .orElseThrow(() -> new RecordNotFoundException("Repair Type", ((Number) repairTypeIdObj).longValue()));
+            Long repairTypeId = ((Number) repairTypeIdObj).longValue();
+            RepairType repairType = repairTypeRepository.findById(repairTypeId)
+                    .orElseThrow(() -> new RecordNotFoundException("Repair Type", repairTypeId));
             repair.setRepairType(repairType);
         }
 
@@ -79,7 +134,7 @@ public class RepairService {
         if (updates.containsKey("totalRepairCost")) {
             Object costObj = updates.get("totalRepairCost");
             if (!(costObj instanceof Number)) {
-                throw new BadRequestException("Total repair cost must be a valid number.");
+                throw new BadRequestException("Total repair cost must be a number.");
             }
             repair.setTotalRepairCost(((Number) costObj).doubleValue());
         }
@@ -87,18 +142,27 @@ public class RepairService {
         return repairRepository.save(repair);
     }
 
-    private Date parseDate(String dateStr, String fieldName) {
-        try {
-            return new SimpleDateFormat("dd-MM-yyyy").parse(dateStr);
-        } catch (Exception e) {
-            throw new BadRequestException("Invalid " + fieldName + " format. Use dd-MM-yyyy.");
-        }
-    }
-
     public void addRepair(Repair repair) {
         if (repair.getCar() == null) {
-            throw new BadRequestException("Repair must be associated with a car.");
+            throw new BadRequestException("Repair must be linked to a car.");
         }
+
+        if (repair.getRepairType() == null) {
+            throw new BadRequestException("Repair type is required.");
+        }
+
         repairRepository.save(repair);
+    }
+
+    private Date parseDate(String dateStr, String fieldName) {
+        if (dateStr == null || dateStr.trim().isEmpty()) {
+            throw new BadRequestException(fieldName + " is required.");
+        }
+
+        try {
+            return new SimpleDateFormat("dd-MM-yyyy").parse(dateStr);
+        } catch (ParseException e) {
+            throw new BadRequestException("Invalid " + fieldName + " format. Use dd-MM-yyyy.");
+        }
     }
 }
