@@ -1,8 +1,8 @@
 package nl.novi.eindprojectbackend.dtos;
 
-import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 
 public class RepairTypeDto {
 
@@ -12,7 +12,7 @@ public class RepairTypeDto {
     private String name;
 
     @NotNull(message = "Repair type cost is required.")
-    @DecimalMin(value = "0.01", inclusive = true, message = "Repair type cost must be greater than zero.")
+    @Positive(message = "Repair type cost must be greater than zero.")
     private Double cost;
 
     @NotBlank(message = "Repair type description is required.")

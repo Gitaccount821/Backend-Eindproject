@@ -19,7 +19,7 @@ public class RepairTypeService {
     }
 
     public RepairType addRepairType(RepairType repairType) {
-        validateRepairType(repairType);
+        checkDuplicateName(repairType.getName());
         return repairTypeRepository.save(repairType);
     }
 
@@ -35,7 +35,9 @@ public class RepairTypeService {
     public RepairType updateRepairType(Long id, RepairType repairType) {
         RepairType existingRepairType = getRepairTypeById(id);
 
-        validateRepairType(repairType);
+        if (!existingRepairType.getName().equals(repairType.getName())) {
+            checkDuplicateName(repairType.getName());
+        }
 
         existingRepairType.setName(repairType.getName());
         existingRepairType.setCost(repairType.getCost());
@@ -51,12 +53,18 @@ public class RepairTypeService {
         Double cost = repairType.getCost();
         String description = updates.containsKey("description") ? (String) updates.get("description") : repairType.getDescription();
 
-        if (name == null || name.trim().isEmpty()) {
-            throw new BadRequestException("Repair type name cannot be empty.");
+        if (updates.containsKey("name")) {
+            if (name == null || name.trim().isEmpty()) {
+                throw new BadRequestException("Repair type name cannot be empty.");
+            }
+            if (!repairType.getName().equals(name)) {
+                checkDuplicateName(name);
+            }
         }
 
-        Object costObj = updates.get("cost");
-        if (costObj != null) {
+        if (updates.containsKey("cost")) {
+            Object costObj = updates.get("cost");
+
             if (costObj instanceof Integer) {
                 cost = ((Integer) costObj).doubleValue();
             } else if (costObj instanceof Double) {
@@ -70,8 +78,10 @@ public class RepairTypeService {
             }
         }
 
-        if (description == null || description.trim().isEmpty()) {
-            throw new BadRequestException("Repair type description cannot be empty.");
+        if (updates.containsKey("description")) {
+            if (description == null || description.trim().isEmpty()) {
+                throw new BadRequestException("Repair type description cannot be empty.");
+            }
         }
 
         repairType.setName(name);
@@ -86,17 +96,9 @@ public class RepairTypeService {
         repairTypeRepository.delete(repairType);
     }
 
-    private void validateRepairType(RepairType repairType) {
-        if (repairType.getName() == null || repairType.getName().trim().isEmpty()) {
-            throw new BadRequestException("Repair type name cannot be empty.");
-        }
-
-        if (repairType.getCost() == null || repairType.getCost() <= 0.0) {
-            throw new BadRequestException("Repair type cost must be greater than zero.");
-        }
-
-        if (repairType.getDescription() == null || repairType.getDescription().trim().isEmpty()) {
-            throw new BadRequestException("Repair type description cannot be empty.");
+    private void checkDuplicateName(String name) {
+        if (repairTypeRepository.existsByName(name)) {
+            throw new BadRequestException("Repair type with name '" + name + "' already exists.");
         }
     }
 }
