@@ -1,14 +1,13 @@
 package nl.novi.eindprojectbackend.services;
 
 import nl.novi.eindprojectbackend.exceptions.RecordNotFoundException;
+import nl.novi.eindprojectbackend.exceptions.BadRequestException;
 import nl.novi.eindprojectbackend.models.RepairType;
 import nl.novi.eindprojectbackend.repositories.RepairTypeRepository;
-import nl.novi.eindprojectbackend.exceptions.BadRequestException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @Service
 public class RepairTypeService {
@@ -19,20 +18,8 @@ public class RepairTypeService {
         this.repairTypeRepository = repairTypeRepository;
     }
 
-    private void validateRepairType(String name, Double cost, String description) {
-        if (name == null || name.trim().isEmpty()) {
-            throw new BadRequestException("Repair type name", true);
-        }
-        if (cost == null || cost <= 0) {
-            throw new BadRequestException("Repair type cost must be greater than zero.");
-        }
-        if (description == null || description.trim().isEmpty()) {
-            throw new BadRequestException("Repair type description", true);
-        }
-    }
-
     public RepairType addRepairType(RepairType repairType) {
-        validateRepairType(repairType.getName(), repairType.getCost(), repairType.getDescription());
+        validateRepairType(repairType);
         return repairTypeRepository.save(repairType);
     }
 
@@ -40,16 +27,15 @@ public class RepairTypeService {
         return repairTypeRepository.findAll();
     }
 
-    public Optional<RepairType> getRepairTypeById(Long id) {
-        return Optional.of(repairTypeRepository.findById(id)
-                .orElseThrow(() -> new RecordNotFoundException("Repair Type", id)));
+    public RepairType getRepairTypeById(Long id) {
+        return repairTypeRepository.findById(id)
+                .orElseThrow(() -> new RecordNotFoundException("Repair Type", id));
     }
 
     public RepairType updateRepairType(Long id, RepairType repairType) {
-        RepairType existingRepairType = repairTypeRepository.findById(id)
-                .orElseThrow(() -> new RecordNotFoundException("Repair Type", id));
+        RepairType existingRepairType = getRepairTypeById(id);
 
-        validateRepairType(repairType.getName(), repairType.getCost(), repairType.getDescription());
+        validateRepairType(repairType);
 
         existingRepairType.setName(repairType.getName());
         existingRepairType.setCost(repairType.getCost());
@@ -59,32 +45,33 @@ public class RepairTypeService {
     }
 
     public RepairType patchRepairType(Long id, Map<String, Object> updates) {
-        RepairType repairType = repairTypeRepository.findById(id)
-                .orElseThrow(() -> new RecordNotFoundException("Repair Type", id));
+        RepairType repairType = getRepairTypeById(id);
 
         String name = updates.containsKey("name") ? (String) updates.get("name") : repairType.getName();
+        Double cost = repairType.getCost();
+        String description = updates.containsKey("description") ? (String) updates.get("description") : repairType.getDescription();
+
         if (name == null || name.trim().isEmpty()) {
-            throw new BadRequestException("Repair type name", true);
+            throw new BadRequestException("Repair type name cannot be empty.");
         }
 
         Object costObj = updates.get("cost");
-        Double cost = repairType.getCost();
+        if (costObj != null) {
+            if (costObj instanceof Integer) {
+                cost = ((Integer) costObj).doubleValue();
+            } else if (costObj instanceof Double) {
+                cost = (Double) costObj;
+            } else {
+                throw new BadRequestException("Repair type cost must be a valid number.");
+            }
 
-        if (costObj instanceof Integer) {
-            cost = ((Integer) costObj).doubleValue();
-        } else if (costObj instanceof Double) {
-            cost = (Double) costObj;
-        } else if (costObj != null) {
-            throw new BadRequestException("Repair type cost must be a valid number.");
+            if (cost <= 0.0) {
+                throw new BadRequestException("Repair type cost must be greater than zero.");
+            }
         }
 
-        if (cost <= 0.0) {
-            throw new BadRequestException("Repair type cost must be greater than zero.");
-        }
-
-        String description = updates.containsKey("description") ? (String) updates.get("description") : repairType.getDescription();
         if (description == null || description.trim().isEmpty()) {
-            throw new BadRequestException("Repair type description", true);
+            throw new BadRequestException("Repair type description cannot be empty.");
         }
 
         repairType.setName(name);
@@ -95,9 +82,21 @@ public class RepairTypeService {
     }
 
     public void deleteRepairType(Long id) {
-        if (!repairTypeRepository.existsById(id)) {
-            throw new RecordNotFoundException("Repair Type", id);
+        RepairType repairType = getRepairTypeById(id);
+        repairTypeRepository.delete(repairType);
+    }
+
+    private void validateRepairType(RepairType repairType) {
+        if (repairType.getName() == null || repairType.getName().trim().isEmpty()) {
+            throw new BadRequestException("Repair type name cannot be empty.");
         }
-        repairTypeRepository.deleteById(id);
+
+        if (repairType.getCost() == null || repairType.getCost() <= 0.0) {
+            throw new BadRequestException("Repair type cost must be greater than zero.");
+        }
+
+        if (repairType.getDescription() == null || repairType.getDescription().trim().isEmpty()) {
+            throw new BadRequestException("Repair type description cannot be empty.");
+        }
     }
 }

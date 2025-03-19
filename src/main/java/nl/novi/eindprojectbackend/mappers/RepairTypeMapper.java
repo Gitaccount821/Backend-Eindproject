@@ -5,7 +5,14 @@ import nl.novi.eindprojectbackend.models.RepairType;
 
 public class RepairTypeMapper {
 
+    private RepairTypeMapper() {
+    }
+
     public static RepairTypeDto toDto(RepairType repairType) {
+        if (repairType == null) {
+            return null;
+        }
+
         return new RepairTypeDto(
                 repairType.getId(),
                 repairType.getName(),
@@ -15,6 +22,10 @@ public class RepairTypeMapper {
     }
 
     public static RepairType toEntity(RepairTypeDto dto) {
+        if (dto == null) {
+            return null;
+        }
+
         RepairType repairType = new RepairType();
         repairType.setId(dto.getId());
         repairType.setName(dto.getName());
