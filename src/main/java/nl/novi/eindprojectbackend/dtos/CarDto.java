@@ -22,6 +22,7 @@ public class CarDto {
 
     private Double totalRepairCost;
 
+    @Pattern(regexp = "^\\d{2}-\\d{2}-\\d{4}$", message = "Repair request date must be in dd-MM-yyyy format.")
     @NotBlank(message = "Repair request date is required.")
     private String repairRequestDate;
 

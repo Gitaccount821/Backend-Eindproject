@@ -1,8 +1,9 @@
 package nl.novi.eindprojectbackend.services;
 
 import nl.novi.eindprojectbackend.dtos.CarDto;
-import nl.novi.eindprojectbackend.exceptions.RecordNotFoundException;
 import nl.novi.eindprojectbackend.exceptions.BadRequestException;
+import nl.novi.eindprojectbackend.exceptions.RecordNotFoundException;
+import nl.novi.eindprojectbackend.mappers.CarMapper;
 import nl.novi.eindprojectbackend.models.Car;
 import nl.novi.eindprojectbackend.models.Repair;
 import nl.novi.eindprojectbackend.models.User;
@@ -12,10 +13,11 @@ import nl.novi.eindprojectbackend.repositories.RepairRepository;
 import nl.novi.eindprojectbackend.repositories.UserRepository;
 import org.springframework.stereotype.Service;
 
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class CarService {
@@ -25,62 +27,66 @@ public class CarService {
     private final RepairRepository repairRepository;
     private final UserRepository userRepository;
 
-    public CarService(CarRepository carRepository, PdfAttachmentRepository pdfAttachmentRepository,
-                      RepairRepository repairRepository, UserRepository userRepository) {
+    public CarService(CarRepository carRepository,
+                      PdfAttachmentRepository pdfAttachmentRepository,
+                      RepairRepository repairRepository,
+                      UserRepository userRepository) {
         this.carRepository = carRepository;
         this.pdfAttachmentRepository = pdfAttachmentRepository;
         this.repairRepository = repairRepository;
         this.userRepository = userRepository;
     }
 
-    public Car addCar(Car car, String ownerUsername) {
-        if (car.getCarType() == null || car.getCarType().trim().isEmpty()) {
-            throw new BadRequestException("Car type is required.");
-        }
 
-        if (car.getRepairRequestDate() == null || car.getRepairRequestDate().trim().isEmpty()) {
-            throw new BadRequestException("Repair request date is required.");
-        }
+    public CarDto addCar(CarDto carDto) {
+        User owner = userRepository.findById(carDto.getOwnerUsername())
+                .orElseThrow(() -> new RecordNotFoundException("User", carDto.getOwnerUsername())); // ✅ NOT null
 
-        // Validate owner
-        User owner = userRepository.findById(ownerUsername)
-                .orElseThrow(() -> new RecordNotFoundException("User", null));
-        car.setOwner(owner);
+        Car car = CarMapper.toEntity(carDto, owner);
 
-        return carRepository.save(car);
+        Car savedCar = carRepository.save(car);
+
+        return CarMapper.toDto(savedCar);
     }
 
-    public List<Car> getAllCars() {
-        return carRepository.findAll();
+    public List<CarDto> getAllCars() {
+        return carRepository.findAll()
+                .stream()
+                .map(CarMapper::toDto)
+                .collect(Collectors.toList());
     }
 
-    public Car getCarById(Long id) {
-        return carRepository.findById(id)
+
+    public CarDto getCarById(Long id) {
+        Car car = carRepository.findById(id)
                 .orElseThrow(() -> new RecordNotFoundException("Car", id));
+
+        return CarMapper.toDto(car);
     }
 
-    public Car updateCar(Long id, Car updatedCar) {
+
+    public CarDto updateCar(Long id, CarDto carDto) {
         Car existingCar = carRepository.findById(id)
                 .orElseThrow(() -> new RecordNotFoundException("Car", id));
 
-        if (updatedCar.getCarType() == null || updatedCar.getCarType().trim().isEmpty()) {
-            throw new BadRequestException("Car type is required.");
-        }
+        User owner = userRepository.findById(carDto.getOwnerUsername())
+                .orElseThrow(() -> new RecordNotFoundException("User", carDto.getOwnerUsername()));
 
-        if (updatedCar.getRepairRequestDate() == null || updatedCar.getRepairRequestDate().trim().isEmpty()) {
-            throw new BadRequestException("Repair request date is required.");
-        }
+        existingCar.setCarType(carDto.getCarType());
+        existingCar.setRepairRequestDate(carDto.getRepairRequestDate());
+        existingCar.setOwner(owner);
 
-        existingCar.setCarType(updatedCar.getCarType());
-        existingCar.setOwner(updatedCar.getOwner());
-        existingCar.setRepairRequestDate(updatedCar.getRepairRequestDate());
+        existingCar.updateTotalRepairCost();
 
-        existingCar.updateTotalRepairCost(); // You have this in your model
-        return carRepository.save(existingCar);
+        Car savedCar = carRepository.save(existingCar);
+
+        return CarMapper.toDto(savedCar);
     }
 
-    public Car patchCar(Long id, Map<String, Object> updates) {
-        Car car = getCarById(id);
+
+    public CarDto patchCar(Long id, Map<String, Object> updates) {
+        Car car = carRepository.findById(id)
+                .orElseThrow(() -> new RecordNotFoundException("Car", id));
 
         if (updates.containsKey("carType")) {
             String carType = (String) updates.get("carType");
@@ -97,28 +103,38 @@ public class CarService {
             }
 
             try {
+                // Validate format
                 new SimpleDateFormat("dd-MM-yyyy").parse(repairRequestDate);
                 car.setRepairRequestDate(repairRequestDate);
-            } catch (Exception e) {
+            } catch (ParseException e) {
                 throw new BadRequestException("Invalid repair request date format. Use dd-MM-yyyy.");
             }
         }
 
         if (updates.containsKey("ownerUsername")) {
             String ownerUsername = (String) updates.get("ownerUsername");
+
             User owner = userRepository.findById(ownerUsername)
-                    .orElseThrow(() -> new RecordNotFoundException("User", null));
+                    .orElseThrow(() -> new RecordNotFoundException("User", ownerUsername));
+
             car.setOwner(owner);
         }
 
-        return carRepository.save(car);
+
+        Car savedCar = carRepository.save(car);
+
+        return CarMapper.toDto(savedCar);
     }
 
+
     public void deleteCar(Long id) {
-        Car car = getCarById(id);
+        Car car = carRepository.findById(id)
+                .orElseThrow(() -> new RecordNotFoundException("Car", id));
+
 
         List<Repair> repairs = car.getRepairs();
         repairRepository.deleteAll(repairs);
+
 
         if (car.getPdfAttachment() != null) {
             pdfAttachmentRepository.delete(car.getPdfAttachment());
