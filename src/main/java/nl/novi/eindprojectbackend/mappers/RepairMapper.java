@@ -17,7 +17,6 @@ public class RepairMapper {
     private RepairMapper() {
     }
 
-
     public static RepairDto toDto(Repair repair) {
         if (repair == null) {
             return null;
@@ -47,7 +46,12 @@ public class RepairMapper {
                 .collect(Collectors.toList()));
 
         dto.setPartDetails(parts.stream()
-                .map(part -> new PartDetailDto(part.getId(), part.getName(), part.getPrice()))
+                .map(part -> new PartDetailDto(
+                        part.getId(),
+                        part.getName(),
+                        part.getPrice(),
+                        part.getStock()
+                ))
                 .collect(Collectors.toList()));
 
         return dto;
@@ -59,7 +63,6 @@ public class RepairMapper {
         }
         Repair repair = new Repair();
         repair.setId(dto.getId());
-
         return repair;
     }
 }

@@ -42,9 +42,16 @@ public class CarMapper {
                 repair.getTotalRepairCost(),
                 sdf.format(repair.getRepairRequestDate()),
                 repair.getRepairDate() != null ? sdf.format(repair.getRepairDate()) : null,
-                repair.getParts() != null ? repair.getParts().stream().map(Part::getId).collect(Collectors.toList()) : null,
                 repair.getParts() != null ? repair.getParts().stream()
-                        .map(part -> new PartDetailDto(part.getId(), part.getName(), part.getPrice()))
+                        .map(Part::getId)
+                        .collect(Collectors.toList()) : null,
+                repair.getParts() != null ? repair.getParts().stream()
+                        .map(part -> new PartDetailDto(
+                                part.getId(),
+                                part.getName(),
+                                part.getPrice(),
+                                part.getStock()
+                        ))
                         .collect(Collectors.toList()) : null
         );
     }

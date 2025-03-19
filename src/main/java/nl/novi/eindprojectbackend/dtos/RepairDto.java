@@ -60,8 +60,14 @@ public class RepairDto {
                 ? repair.getParts().stream().map(Part::getId).collect(Collectors.toList()) : null;
         this.partDetails = (repair.getParts() != null)
                 ? repair.getParts().stream()
-                .map(part -> new PartDetailDto(part.getId(), part.getName(), part.getPrice()))
-                .collect(Collectors.toList()) : null;
+                .map(part -> new PartDetailDto(
+                        part.getId(),
+                        part.getName(),
+                        part.getPrice(),
+                        part.getStock()
+                ))
+                .collect(Collectors.toList())
+                : null;
     }
 
     // Allemaal nodig voor Carinformatie opvragen

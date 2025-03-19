@@ -1,14 +1,13 @@
 package nl.novi.eindprojectbackend.controllers;
 
-import nl.novi.eindprojectbackend.models.Part;
-import nl.novi.eindprojectbackend.services.PartService;
+import nl.novi.eindprojectbackend.dtos.PartDetailDto;
 import nl.novi.eindprojectbackend.exceptions.RecordNotFoundException;
+import nl.novi.eindprojectbackend.services.PartService;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.validation.Valid;
-
 import java.util.List;
 import java.util.Map;
 
@@ -23,33 +22,32 @@ public class PartController {
     }
 
     @PostMapping
-    public ResponseEntity<Part> addPart(@Valid @RequestBody Part part) {
-        Part savedPart = partService.addPart(part);
+    public ResponseEntity<PartDetailDto> addPart(@Valid @RequestBody PartDetailDto partDetailDto) {
+        PartDetailDto savedPart = partService.addPart(partDetailDto);
         return ResponseEntity.ok(savedPart);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Part> getPartById(@PathVariable Long id) {
-        Part part = partService.getPartById(id)
-                .orElseThrow(() -> new RecordNotFoundException("Part", id));
+    public ResponseEntity<PartDetailDto> getPartById(@PathVariable Long id) {
+        PartDetailDto part = partService.getPartById(id);
         return ResponseEntity.ok(part);
     }
 
     @GetMapping
-    public ResponseEntity<List<Part>> getAllParts() {
-        List<Part> parts = partService.getAllParts();
+    public ResponseEntity<List<PartDetailDto>> getAllParts() {
+        List<PartDetailDto> parts = partService.getAllParts();
         return ResponseEntity.ok(parts);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Part> updatePart(@PathVariable Long id, @RequestBody Part partDetails) {
-        Part updatedPart = partService.updatePart(id, partDetails);
+    public ResponseEntity<PartDetailDto> updatePart(@PathVariable Long id, @Valid @RequestBody PartDetailDto partDetailDto) {
+        PartDetailDto updatedPart = partService.updatePart(id, partDetailDto);
         return ResponseEntity.ok(updatedPart);
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<Part> patchPart(@PathVariable Long id, @RequestBody Map<String, Object> updates) {
-        Part updatedPart = partService.patchPart(id, updates);
+    public ResponseEntity<PartDetailDto> patchPart(@PathVariable Long id, @RequestBody Map<String, Object> updates) {
+        PartDetailDto updatedPart = partService.patchPart(id, updates);
         return ResponseEntity.ok(updatedPart);
     }
 
@@ -59,4 +57,3 @@ public class PartController {
         return ResponseEntity.ok("Part deleted successfully.");
     }
 }
-

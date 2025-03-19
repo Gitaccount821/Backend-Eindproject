@@ -10,6 +10,8 @@ import nl.novi.eindprojectbackend.models.RepairType;
 import nl.novi.eindprojectbackend.repositories.CarRepository;
 import nl.novi.eindprojectbackend.repositories.RepairRepository;
 import nl.novi.eindprojectbackend.repositories.RepairTypeRepository;
+import nl.novi.eindprojectbackend.repositories.PartRepository;
+
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
@@ -25,15 +27,18 @@ public class RepairService {
     private final CarRepository carRepository;
     private final RepairRepository repairRepository;
     private final RepairTypeRepository repairTypeRepository;
+    private final PartRepository partRepository;
     private final PartService partService;
 
     public RepairService(CarRepository carRepository,
                          RepairRepository repairRepository,
                          RepairTypeRepository repairTypeRepository,
+                         PartRepository partRepository,
                          PartService partService) {
         this.carRepository = carRepository;
         this.repairRepository = repairRepository;
         this.repairTypeRepository = repairTypeRepository;
+        this.partRepository = partRepository;
         this.partService = partService;
     }
 
@@ -56,14 +61,12 @@ public class RepairService {
         repair.setRepairRequestDate(parseDate(repairDto.getRepairRequestDate(), "Repair request date"));
         repair.setRepairDate(parseDate(repairDto.getRepairDate(), "Repair date"));
 
-
         double totalCost = repairType.getCost();
 
-
         if (repairDto.getPartIds() != null && !repairDto.getPartIds().isEmpty()) {
+
             List<Part> parts = repairDto.getPartIds().stream()
-                    .map(partId -> partService.getPartById(partId)
-                            .orElseThrow(() -> new RecordNotFoundException("Part", partId)))
+                    .map(partId -> partService.getPartEntityById(partId))
                     .collect(Collectors.toList());
 
             for (Part part : parts) {
@@ -72,7 +75,7 @@ public class RepairService {
                 }
 
                 part.setStock(part.getStock() - 1);
-                partService.updatePart(part.getId(), part);
+                partRepository.save(part);
 
                 totalCost += part.getPrice();
             }
@@ -81,7 +84,6 @@ public class RepairService {
         }
 
         repair.setTotalRepairCost(totalCost);
-
 
         Repair savedRepair = repairRepository.save(repair);
 
@@ -93,6 +95,7 @@ public class RepairService {
     }
 
     public Repair patchRepair(Long carId, Long repairId, Map<String, Object> updates) {
+
         Car car = carRepository.findById(carId)
                 .orElseThrow(() -> new RecordNotFoundException("Car", carId));
 
@@ -124,10 +127,11 @@ public class RepairService {
 
         if (updates.containsKey("partIds")) {
             List<Long> partIds = (List<Long>) updates.get("partIds");
+
             List<Part> parts = partIds.stream()
-                    .map(partId -> partService.getPartById(partId)
-                            .orElseThrow(() -> new RecordNotFoundException("Part", partId)))
+                    .map(partId -> partService.getPartEntityById(partId))
                     .collect(Collectors.toList());
+
             repair.setParts(parts);
         }
 
