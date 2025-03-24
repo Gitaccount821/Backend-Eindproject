@@ -35,7 +35,6 @@ public class ExceptionController {
         return buildResponseEntity(HttpStatus.NOT_FOUND, ex.getMessage(), request);
     }
 
-
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<Object> handleBadRequestException(BadRequestException ex, WebRequest request) {
         log.warn("BadRequestException: {}", ex.getMessage());
@@ -56,9 +55,9 @@ public class ExceptionController {
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<Object> handleDataIntegrityViolationException(DataIntegrityViolationException ex, WebRequest request) {
-        log.warn("DataIntegrityViolationException: {}", ex.getMostSpecificCause().getMessage());
-        String message = "Database integrity violation: " + ex.getMostSpecificCause().getMessage();
-        return buildResponseEntity(HttpStatus.BAD_REQUEST, message, request);
+        log.warn("Data integrity violation occurred: {}", ex.getMostSpecificCause().getMessage());
+        String userMessage = "Cannot delete or modify this item because it is still in use.";
+        return buildResponseEntity(HttpStatus.CONFLICT, userMessage, request);
     }
 
     @ExceptionHandler(Exception.class)
@@ -75,14 +74,12 @@ public class ExceptionController {
         errorDetails.put("error", status.getReasonPhrase());
         errorDetails.put("message", message);
         errorDetails.put("path", request.getDescription(false).replace("uri=", ""));
-
         return new ResponseEntity<>(errorDetails, status);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Object> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex, WebRequest request) {
         log.warn("Validation failed: {}", ex.getMessage());
-
         Map<String, Object> errorDetails = new LinkedHashMap<>();
         errorDetails.put("timestamp", LocalDateTime.now());
         errorDetails.put("status", HttpStatus.BAD_REQUEST.value());
