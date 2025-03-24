@@ -2,6 +2,7 @@ package nl.novi.eindprojectbackend.services;
 
 import nl.novi.eindprojectbackend.dtos.CarDto;
 import nl.novi.eindprojectbackend.exceptions.BadRequestException;
+import nl.novi.eindprojectbackend.exceptions.ForbiddenActionException;
 import nl.novi.eindprojectbackend.exceptions.RecordNotFoundException;
 import nl.novi.eindprojectbackend.mappers.CarMapper;
 import nl.novi.eindprojectbackend.models.Car;
@@ -11,6 +12,7 @@ import nl.novi.eindprojectbackend.repositories.CarRepository;
 import nl.novi.eindprojectbackend.repositories.PdfAttachmentRepository;
 import nl.novi.eindprojectbackend.repositories.RepairRepository;
 import nl.novi.eindprojectbackend.repositories.UserRepository;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
@@ -40,7 +42,7 @@ public class CarService {
 
     public CarDto addCar(CarDto carDto) {
         User owner = userRepository.findById(carDto.getOwnerUsername())
-                .orElseThrow(() -> new RecordNotFoundException("User", carDto.getOwnerUsername())); // ✅ NOT null
+                .orElseThrow(() -> new RecordNotFoundException("User", carDto.getOwnerUsername()));
 
         Car car = CarMapper.toEntity(carDto, owner);
 
@@ -50,6 +52,19 @@ public class CarService {
     }
 
     public List<CarDto> getAllCars() {
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+
+        boolean isKlant = SecurityContextHolder.getContext().getAuthentication().getAuthorities()
+                .stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_KLANT"));
+
+        if (isKlant) {
+            return carRepository.findAll().stream()
+                    .filter(car -> car.getOwner().getUsername().equals(currentUsername))
+                    .map(CarMapper::toDto)
+                    .collect(Collectors.toList());
+        }
+
         return carRepository.findAll()
                 .stream()
                 .map(CarMapper::toDto)
@@ -57,12 +72,23 @@ public class CarService {
     }
 
 
+
     public CarDto getCarById(Long id) {
         Car car = carRepository.findById(id)
                 .orElseThrow(() -> new RecordNotFoundException("Car", id));
 
+        String currentUsername = SecurityContextHolder.getContext().getAuthentication().getName();
+        boolean isKlant = SecurityContextHolder.getContext().getAuthentication().getAuthorities()
+                .stream()
+                .anyMatch(auth -> auth.getAuthority().equals("ROLE_KLANT"));
+
+        if (isKlant && !car.getOwner().getUsername().equals(currentUsername)) {
+            throw new ForbiddenActionException();
+        }
+
         return CarMapper.toDto(car);
     }
+
 
 
     public CarDto updateCar(Long id, CarDto carDto) {
@@ -103,7 +129,6 @@ public class CarService {
             }
 
             try {
-                // Validate format
                 new SimpleDateFormat("dd-MM-yyyy").parse(repairRequestDate);
                 car.setRepairRequestDate(repairRequestDate);
             } catch (ParseException e) {

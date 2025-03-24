@@ -111,7 +111,7 @@ public class PdfAttachmentService {
         String username = auth.getName();
 
         if ("KLANT".equals(userRole) && !car.getOwner().getUsername().equals(username)) {
-            throw new ForbiddenActionException(userRole, "access this car's PDF");
+            throw new ForbiddenActionException();
         }
     }
 

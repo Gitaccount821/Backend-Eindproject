@@ -39,8 +39,9 @@ public class UserService {
     public UserResponseDto createUser(UserCreateRequestDto userDto, String role, String currentUserRole) {
 
         if (!currentUserRole.equals("ROLE_MEDEWERKER")) {
-            throw new ForbiddenActionException("ROLE_MEDEWERKER", "create new users");
+            throw new ForbiddenActionException();
         }
+
 
         if (userRepository.existsById(userDto.getUsername())) {
             throw new BadRequestException("Username already exists!");
