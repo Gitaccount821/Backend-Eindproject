@@ -1,14 +1,25 @@
 package nl.novi.eindprojectbackend.dtos;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
+
 public class RepairTypeDto {
 
     private Long id;
 
+    @NotBlank(message = "Repair type name is required.")
     private String name;
 
+    @NotNull(message = "Repair type cost is required.")
+    @Positive(message = "Repair type cost must be greater than zero.")
     private Double cost;
 
+    @NotBlank(message = "Repair type description is required.")
     private String description;
+
+    public RepairTypeDto() {
+    }
 
     public RepairTypeDto(Long id, String name, Double cost, String description) {
         this.id = id;

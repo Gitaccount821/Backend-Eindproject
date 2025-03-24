@@ -51,36 +51,52 @@ public class SpringSecurityConfig {
     protected SecurityFilterChain filter(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .cors(cors -> {})
+                .cors(cors -> {
+                })
                 .authorizeHttpRequests(auth -> auth
-                        // --- Public Endpoints ---
+
+                        // PUBLIC ENDPOINTS
                         .requestMatchers(HttpMethod.POST, "/authenticate").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/users/register").permitAll()
 
-                        // --- User Management ---
+                        // USER MANAGEMENT
                         .requestMatchers(HttpMethod.POST, "/api/users/create-user").hasRole("MEDEWERKER")
 
-                        // --- Repair Management ---
+                        // REPAIR TYPES
                         .requestMatchers(HttpMethod.GET, "/api/repair-types/**").hasAnyRole("MONTEUR", "MEDEWERKER")
-                        .requestMatchers("/api/repair-types/**").hasRole("MONTEUR")
-                        .requestMatchers("/api/repairs/**").hasRole("MONTEUR")  // ⬅️ Enforces access control on repairs
+                        .requestMatchers(HttpMethod.POST, "/api/repair-types/**").hasRole("MONTEUR")
+                        .requestMatchers(HttpMethod.PUT, "/api/repair-types/**").hasRole("MONTEUR")
+                        .requestMatchers(HttpMethod.PATCH, "/api/repair-types/**").hasRole("MONTEUR")
+                        .requestMatchers(HttpMethod.DELETE, "/api/repair-types/**").hasRole("MONTEUR")
 
-                        // --- PDF Management ---
-                        .requestMatchers("/api/pdfs/download/**").hasAnyRole("MONTEUR", "KLANT", "MEDEWERKER")
+                        // REPAIRS
+                        .requestMatchers("/api/repairs/**").hasRole("MONTEUR")
+
+                        // PDFS
+                        .requestMatchers(HttpMethod.GET, "/api/pdfs/download/**").hasAnyRole("MONTEUR", "KLANT", "MEDEWERKER")
+                        .requestMatchers(HttpMethod.GET, "/api/pdfs/{carId}").hasAnyRole("MONTEUR", "KLANT", "MEDEWERKER")
                         .requestMatchers(HttpMethod.POST, "/api/pdfs/**").hasRole("KLANT")
                         .requestMatchers(HttpMethod.DELETE, "/api/pdfs/**").hasAnyRole("MONTEUR", "KLANT", "MEDEWERKER")
 
-                        // --- Parts Management ---
-                        .requestMatchers("/api/parts/**").hasAnyRole("MONTEUR", "MEDEWERKER")
+                        // PARTS
+                        .requestMatchers(HttpMethod.GET, "/api/parts/**").hasAnyRole("MONTEUR", "MEDEWERKER")
+                        .requestMatchers(HttpMethod.POST, "/api/parts/**").hasAnyRole("MONTEUR", "MEDEWERKER")
+                        .requestMatchers(HttpMethod.PUT, "/api/parts/**").hasAnyRole("MONTEUR", "MEDEWERKER")
+                        .requestMatchers(HttpMethod.PATCH, "/api/parts/**").hasAnyRole("MONTEUR", "MEDEWERKER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/parts/**").hasAnyRole("MONTEUR", "MEDEWERKER")
 
-                        // --- Car Management ---
-                        .requestMatchers(HttpMethod.GET, "/api/cars/{carId}").hasAnyRole("MONTEUR", "MEDEWERKER", "KLANT")
-                        .requestMatchers(HttpMethod.POST, "/api/cars/**").hasAnyRole("MEDEWERKER", "MONTEUR")
-                        .requestMatchers(HttpMethod.GET, "/api/cars/{carId}").hasAnyRole("MONTEUR", "MEDEWERKER", "KLANT")
-                        .requestMatchers("/api/cars/**").hasAnyRole("MEDEWERKER", "MONTEUR")
+                        // CARS
+
+                        .requestMatchers(HttpMethod.GET, "/api/cars").hasAnyRole("MONTEUR", "MEDEWERKER")
+                        .requestMatchers(HttpMethod.GET, "/api/cars/{id}").hasAnyRole("KLANT", "MONTEUR", "MEDEWERKER")
+
+                        .requestMatchers(HttpMethod.POST, "/api/cars/**").hasAnyRole("MONTEUR", "MEDEWERKER")
+                        .requestMatchers(HttpMethod.PATCH, "/api/cars/**").hasAnyRole("MONTEUR", "MEDEWERKER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/cars/**").hasAnyRole("MONTEUR", "MEDEWERKER")
 
 
-                        .anyRequest().authenticated()
+
+                                .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex
                         .authenticationEntryPoint((request, response, authException) -> {
