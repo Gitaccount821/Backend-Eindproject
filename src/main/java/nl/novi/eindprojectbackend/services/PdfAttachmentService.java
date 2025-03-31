@@ -42,6 +42,15 @@ public class PdfAttachmentService {
         Car car = carRepository.findById(carId)
                 .orElseThrow(() -> new RecordNotFoundException("Car", carId));
 
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        String username = auth.getName();
+        boolean isKlant = auth.getAuthorities().stream()
+                .anyMatch(autho -> autho.getAuthority().equals("ROLE_KLANT"));
+
+        if (isKlant && !car.getOwner().getUsername().equals(username)) {
+            throw new ForbiddenActionException();
+        }
+
         String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
         Path filePath = Paths.get(UPLOAD_DIR, fileName);
 
@@ -58,6 +67,7 @@ public class PdfAttachmentService {
 
         return pdfAttachmentRepository.save(attachment);
     }
+
 
     public PdfAttachment getAttachmentByCarId(Long carId) {
         return pdfAttachmentRepository.findByCarId(carId)

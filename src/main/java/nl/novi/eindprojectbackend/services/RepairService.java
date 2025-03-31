@@ -169,4 +169,20 @@ public class RepairService {
             throw new BadRequestException("Invalid " + fieldName + " format. Use dd-MM-yyyy.");
         }
     }
+    public List<Repair> getRepairsForCar(Long carId) {
+        Car car = carRepository.findById(carId)
+                .orElseThrow(() -> new RecordNotFoundException("Car", carId));
+        return car.getRepairs();
+    }
+
+    public Repair getRepairById(Long carId, Long repairId) {
+        Car car = carRepository.findById(carId)
+                .orElseThrow(() -> new RecordNotFoundException("Car", carId));
+
+        return car.getRepairs().stream()
+                .filter(r -> r.getId().equals(repairId))
+                .findFirst()
+                .orElseThrow(() -> new RecordNotFoundException("Repair", repairId));
+    }
+
 }

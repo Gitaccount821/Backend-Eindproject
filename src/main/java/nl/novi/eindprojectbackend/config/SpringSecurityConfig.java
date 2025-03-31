@@ -70,13 +70,15 @@ public class SpringSecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/repair-types/**").hasRole("MONTEUR")
 
                         // REPAIRS
-                        .requestMatchers("/api/repairs/**").hasRole("MONTEUR")
+                        .requestMatchers(HttpMethod.POST, "/api/cars/*/repairs").hasRole("MONTEUR")
+                        .requestMatchers(HttpMethod.PATCH, "/api/cars/*/repairs/*").hasRole("MONTEUR")
+                        .requestMatchers(HttpMethod.GET, "/api/cars/*/repairs").hasRole("MONTEUR")
+                        .requestMatchers(HttpMethod.GET, "/api/cars/*/repairs/*").hasRole("MONTEUR")
 
                         // PDFS
-                        .requestMatchers(HttpMethod.GET, "/api/pdfs/download/**").hasAnyRole("MONTEUR", "KLANT", "MEDEWERKER")
-                        .requestMatchers(HttpMethod.GET, "/api/pdfs/{carId}").hasAnyRole("MONTEUR", "KLANT", "MEDEWERKER")
-                        .requestMatchers(HttpMethod.POST, "/api/pdfs/**").hasRole("KLANT")
-                        .requestMatchers(HttpMethod.DELETE, "/api/pdfs/**").hasAnyRole("MONTEUR", "KLANT", "MEDEWERKER")
+                        .requestMatchers(HttpMethod.POST, "/api/cars/*/pdf").hasRole("KLANT")
+                        .requestMatchers(HttpMethod.GET, "/api/cars/*/pdf").hasAnyRole("KLANT", "MONTEUR", "MEDEWERKER")
+                        .requestMatchers(HttpMethod.DELETE, "/api/cars/*/pdf/*").hasAnyRole("KLANT", "MONTEUR", "MEDEWERKER")
 
                         // PARTS
                         .requestMatchers(HttpMethod.GET, "/api/parts/**").hasAnyRole("MONTEUR", "MEDEWERKER")
