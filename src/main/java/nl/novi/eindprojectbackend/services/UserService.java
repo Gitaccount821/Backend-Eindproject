@@ -8,6 +8,7 @@ import nl.novi.eindprojectbackend.mappers.UserMapper;
 import nl.novi.eindprojectbackend.models.Authority;
 import nl.novi.eindprojectbackend.models.User;
 import nl.novi.eindprojectbackend.repositories.UserRepository;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -36,7 +37,11 @@ public class UserService {
         return UserMapper.toResponseDto(savedUser);
     }
 
-    public UserResponseDto createUser(UserCreateRequestDto userDto, String role, String currentUserRole) {
+    public UserResponseDto createUser(UserCreateRequestDto userDto, String role) {
+        String currentUserRole = SecurityContextHolder.getContext().getAuthentication()
+                .getAuthorities().stream()
+                .map(a -> a.getAuthority())
+                .findFirst().orElse("");
 
         if (!currentUserRole.equals("ROLE_MEDEWERKER")) {
             throw new ForbiddenActionException();

@@ -45,7 +45,7 @@ public class CarMapper {
         }
 
         Car car = new Car();
-        car.setId(dto.getId()); // Usually optional when creating a new entity
+        car.setId(dto.getId());
         car.setCarType(dto.getCarType());
         car.setRepairRequestDate(dto.getRepairRequestDate());
         car.setOwner(owner);

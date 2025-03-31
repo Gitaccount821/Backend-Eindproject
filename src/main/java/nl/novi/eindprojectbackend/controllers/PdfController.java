@@ -23,45 +23,39 @@ import java.nio.file.Paths;
 
 
 
-@RestController
-@RequestMapping("/api/pdfs")
-public class PdfController {
+        @RestController
+        @RequestMapping("/api/cars/{carId}/pdf")
+        public class PdfController {
 
-    private final PdfAttachmentService pdfAttachmentService;
+            private final PdfAttachmentService pdfAttachmentService;
 
-    public PdfController(PdfAttachmentService pdfAttachmentService) {
-        this.pdfAttachmentService = pdfAttachmentService;
-    }
+            public PdfController(PdfAttachmentService pdfAttachmentService) {
+                this.pdfAttachmentService = pdfAttachmentService;
+            }
 
-    @PostMapping(value = "/upload/{carId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<AttachmentDto> uploadPdf(@PathVariable Long carId,
-                                                   @RequestParam("file") MultipartFile file) {
-        PdfAttachment uploadedFile = pdfAttachmentService.uploadPdf(carId, file);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(PdfAttachmentMapper.toDto(uploadedFile));
-    }
+            @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+            public ResponseEntity<AttachmentDto> uploadPdf(@PathVariable Long carId,
+                                                           @RequestParam("file") MultipartFile file) {
+                PdfAttachment uploadedFile = pdfAttachmentService.uploadPdf(carId, file);
+                return ResponseEntity.status(HttpStatus.CREATED)
+                        .body(PdfAttachmentMapper.toDto(uploadedFile));
+            }
 
-    @GetMapping("/{carId}")
-    public ResponseEntity<AttachmentDto> getAttachmentByCarId(@PathVariable Long carId) {
-        PdfAttachment attachment = pdfAttachmentService.getAttachmentByCarId(carId);
-        return ResponseEntity.ok(PdfAttachmentMapper.toDto(attachment));
-    }
+            @GetMapping
+            public ResponseEntity<Resource> downloadPdf(@PathVariable Long carId) {
+                Resource resource = pdfAttachmentService.downloadPdf(carId);
+                String filename = pdfAttachmentService.getAttachmentByCarId(carId).getFileName();
 
-    @GetMapping("/download/{carId}")
-    public ResponseEntity<Resource> downloadPdf(@PathVariable Long carId) {
-        Resource resource = pdfAttachmentService.downloadPdf(carId);
-        String filename = pdfAttachmentService.getAttachmentByCarId(carId).getFileName();
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                        .contentType(MediaType.APPLICATION_PDF)
+                        .body(resource);
+            }
 
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
-                .contentType(MediaType.APPLICATION_PDF)
-                .body(resource);
-    }
-
-    @DeleteMapping("/{carId}/{pdfId}")
-    public ResponseEntity<String> deletePdf(@PathVariable Long carId,
-                                            @PathVariable Long pdfId) {
-        pdfAttachmentService.deletePdfForCar(carId, pdfId);
-        return ResponseEntity.ok("PDF deleted successfully.");
-    }
-}
+            @DeleteMapping("/{pdfId}")
+            public ResponseEntity<String> deletePdf(@PathVariable Long carId,
+                                                    @PathVariable Long pdfId) {
+                pdfAttachmentService.deletePdfForCar(carId, pdfId);
+                return ResponseEntity.ok("PDF deleted successfully.");
+            }
+        }
