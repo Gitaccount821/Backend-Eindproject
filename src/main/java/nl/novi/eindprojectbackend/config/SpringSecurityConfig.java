@@ -70,7 +70,10 @@ public class SpringSecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/repair-types/**").hasRole("MONTEUR")
 
                         // REPAIRS
-                        .requestMatchers("/api/repairs/**").hasRole("MONTEUR")
+                        .requestMatchers(HttpMethod.POST, "/api/cars/*/repairs").hasRole("MONTEUR")
+                        .requestMatchers(HttpMethod.PATCH, "/api/cars/*/repairs/*").hasRole("MONTEUR")
+                        .requestMatchers(HttpMethod.GET, "/api/cars/*/repairs").hasRole("MONTEUR")
+                        .requestMatchers(HttpMethod.GET, "/api/cars/*/repairs/*").hasRole("MONTEUR")
 
                         // PDFS
                         .requestMatchers(HttpMethod.GET, "/api/pdfs/download/**").hasAnyRole("MONTEUR", "KLANT", "MEDEWERKER")
