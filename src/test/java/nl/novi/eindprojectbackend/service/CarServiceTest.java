@@ -1,7 +1,6 @@
 package nl.novi.eindprojectbackend.service;
 
 import nl.novi.eindprojectbackend.dtos.CarDto;
-import nl.novi.eindprojectbackend.exceptions.BadRequestException;
 import nl.novi.eindprojectbackend.exceptions.RecordNotFoundException;
 import nl.novi.eindprojectbackend.models.Car;
 import nl.novi.eindprojectbackend.models.PdfAttachment;
@@ -12,7 +11,6 @@ import nl.novi.eindprojectbackend.repositories.PdfAttachmentRepository;
 import nl.novi.eindprojectbackend.repositories.RepairRepository;
 import nl.novi.eindprojectbackend.repositories.UserRepository;
 import nl.novi.eindprojectbackend.services.CarService;
-import nl.novi.eindprojectbackend.mappers.CarMapper;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
