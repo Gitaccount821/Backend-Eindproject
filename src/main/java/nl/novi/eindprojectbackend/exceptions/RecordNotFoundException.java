@@ -1,6 +1,5 @@
 package nl.novi.eindprojectbackend.exceptions;
 
-import java.io.Serial;
 
 public class RecordNotFoundException extends RuntimeException {
 

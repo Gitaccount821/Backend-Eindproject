@@ -16,7 +16,7 @@ public class PartDetailDto {
     private Double price;
 
     @NotNull(message = "Stock is required")
-    @Min(value = 0, message = "Stock cannot be negative")  // Validation to prevent negative stock
+    @Min(value = 0, message = "Stock cannot be negative")
     private Integer stock;
 
     public PartDetailDto() {

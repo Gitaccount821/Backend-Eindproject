@@ -52,7 +52,7 @@ INSERT INTO car (id, car_type, repair_request_date, owner_username, total_repair
 INSERT INTO repair (id, car_id, repair_type_id, repair_request_date, repair_date, total_repair_cost)
 VALUES (1, 1, 1, '01-01-2025', '25-01-2025', 2200.0); -- (RepairType: 700 + Engine: 1500)
 
--- 🔹 Repair-Parts Relation (Many-to-Many)
+-- 🔹 Repair-Parts
 INSERT INTO repair_parts (repair_id, parts_id) VALUES
                                                    (1, 1),  -- Engine (1500.0)
                                                    (1, 2);  -- Brake Pads (250.0)
