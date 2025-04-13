@@ -1,25 +1,14 @@
 
-
-        package nl.novi.eindprojectbackend.controllers;
-
+package nl.novi.eindprojectbackend.controllers;
 import nl.novi.eindprojectbackend.dtos.AttachmentDto;
-import nl.novi.eindprojectbackend.exceptions.*;
 import nl.novi.eindprojectbackend.mappers.PdfAttachmentMapper;
-import nl.novi.eindprojectbackend.models.Car;
 import nl.novi.eindprojectbackend.models.PdfAttachment;
-import nl.novi.eindprojectbackend.services.CarService;
 import nl.novi.eindprojectbackend.services.PdfAttachmentService;
-
 import org.springframework.http.*;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 
 

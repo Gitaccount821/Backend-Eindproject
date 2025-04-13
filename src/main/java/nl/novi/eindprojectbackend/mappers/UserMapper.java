@@ -15,7 +15,7 @@ public class UserMapper {
         user.setUsername(dto.getUsername());
         user.setPassword(dto.getPassword());
         user.setEmail(dto.getEmail());
-        user.setEnabled(true); // default true
+        user.setEnabled(true);
         return user;
     }
 

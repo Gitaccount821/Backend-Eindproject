@@ -16,11 +16,9 @@ import java.util.Map;
 public class CarController {
 
     private final CarService carService;
-    private final CustomUserDetailsService userDetailsService;
 
     public CarController(CarService carService, CustomUserDetailsService userDetailsService) {
         this.carService = carService;
-        this.userDetailsService = userDetailsService;
     }
 
 

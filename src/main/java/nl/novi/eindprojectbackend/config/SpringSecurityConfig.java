@@ -91,7 +91,6 @@ public class SpringSecurityConfig {
 
                         .requestMatchers(HttpMethod.GET, "/api/cars").hasAnyRole("MONTEUR", "MEDEWERKER")
                         .requestMatchers(HttpMethod.GET, "/api/cars/{id}").hasAnyRole("KLANT", "MONTEUR", "MEDEWERKER")
-
                         .requestMatchers(HttpMethod.POST, "/api/cars/**").hasAnyRole("MONTEUR", "MEDEWERKER")
                         .requestMatchers(HttpMethod.PATCH, "/api/cars/**").hasAnyRole("MONTEUR", "MEDEWERKER")
                         .requestMatchers(HttpMethod.DELETE, "/api/cars/**").hasAnyRole("MONTEUR", "MEDEWERKER")

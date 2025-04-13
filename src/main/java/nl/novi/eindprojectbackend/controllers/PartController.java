@@ -1,7 +1,6 @@
 package nl.novi.eindprojectbackend.controllers;
 
 import nl.novi.eindprojectbackend.dtos.PartDetailDto;
-import nl.novi.eindprojectbackend.exceptions.RecordNotFoundException;
 import nl.novi.eindprojectbackend.services.PartService;
 
 import org.springframework.http.ResponseEntity;

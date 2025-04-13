@@ -1,4 +1,4 @@
- package nl.novi.eindprojectbackend.service;
+package nl.novi.eindprojectbackend.service;
 
 import nl.novi.eindprojectbackend.dtos.CarDto;
 import nl.novi.eindprojectbackend.exceptions.BadRequestException;
@@ -12,6 +12,8 @@ import nl.novi.eindprojectbackend.repositories.PdfAttachmentRepository;
 import nl.novi.eindprojectbackend.repositories.RepairRepository;
 import nl.novi.eindprojectbackend.repositories.UserRepository;
 import nl.novi.eindprojectbackend.services.CarService;
+import nl.novi.eindprojectbackend.mappers.CarMapper;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
@@ -25,25 +27,31 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+
+
 class CarServiceTest {
 
-    @Mock
-    private CarRepository carRepository;
+    private void mockSecurityContext(String username) {
+        var auth = mock(org.springframework.security.core.Authentication.class);
+        when(auth.getName()).thenReturn(username);
 
-    @Mock
-    private PdfAttachmentRepository pdfAttachmentRepository;
+        var context = mock(org.springframework.security.core.context.SecurityContext.class);
+        when(context.getAuthentication()).thenReturn(auth);
 
-    @Mock
-    private RepairRepository repairRepository;
+        org.springframework.security.core.context.SecurityContextHolder.setContext(context);
+    }
 
-    @Mock
-    private UserRepository userRepository;
 
-    @InjectMocks
-    private CarService carService;
+    @Mock private CarRepository carRepository;
+    @Mock private UserRepository userRepository;
+    @Mock private RepairRepository repairRepository;
+    @Mock private PdfAttachmentRepository pdfAttachmentRepository;
+
+    @InjectMocks private CarService carService;
 
     private Car testCar;
     private User testUser;
+    private CarDto testCarDto;
 
     @BeforeEach
     void setUp() {
@@ -55,170 +63,120 @@ class CarServiceTest {
         testCar = new Car();
         testCar.setId(1L);
         testCar.setCarType("Sedan");
-        testCar.setOwner(testUser);
         testCar.setRepairRequestDate("20-02-2025");
+        testCar.setOwner(testUser);
+
+        testCarDto = new CarDto();
+        testCarDto.setCarType("Sedan");
+        testCarDto.setRepairRequestDate("20-02-2025");
+        testCarDto.setOwnerUsername("user1");
     }
 
     @Test
-    void testAddCar_ShouldSaveCar_WhenUserExists() {
+    void addCar_shouldReturnSavedCarDto_whenUserExists() {
+        // Arrange
         when(userRepository.findById("user1")).thenReturn(Optional.of(testUser));
         when(carRepository.save(any(Car.class))).thenReturn(testCar);
 
-        Car result = carService.addCar(testCar, "user1");
+        // Act
+        CarDto result = carService.addCar(testCarDto);
 
-        assertNotNull(result);
+        // Assert
         assertEquals("Sedan", result.getCarType());
-        assertEquals(testUser, result.getOwner());
-
-        verify(userRepository, times(1)).findById("user1");
-        verify(carRepository, times(1)).save(testCar);
+        verify(carRepository, times(1)).save(any(Car.class));
     }
 
     @Test
-    void testAddCar_ShouldThrowException_WhenUserDoesNotExist() {
-        when(userRepository.findById("nonexistent")).thenReturn(Optional.empty());
+    void addCar_shouldThrowException_whenUserNotFound() {
+        when(userRepository.findById("userX")).thenReturn(Optional.empty());
+        testCarDto.setOwnerUsername("userX");
 
-        assertThrows(BadRequestException.class, () -> carService.addCar(new Car(), "nonexistent"));
-
-        verify(userRepository, times(1)).findById("nonexistent");
+        assertThrows(RecordNotFoundException.class, () -> carService.addCar(testCarDto));
     }
 
     @Test
-    void testGetAllCars_ShouldReturnListOfCars() {
-        when(carRepository.findAll()).thenReturn(List.of(testCar));
-
-        List<Car> result = carService.getAllCars();
-
-        assertEquals(1, result.size());
-        verify(carRepository, times(1)).findAll();
-    }
-
-    @Test
-    void testGetCarById_ShouldReturnCar_WhenCarExists() {
+    void getCarById_shouldReturnCarDto_whenCarExists() {
+        // Arrange
+        mockSecurityContext("user1");
         when(carRepository.findById(1L)).thenReturn(Optional.of(testCar));
 
-        Optional<Car> result = carService.getCarById(1L);
+        // Act
+        CarDto result = carService.getCarById(1L);
 
-        assertTrue(result.isPresent());
-        assertEquals("Sedan", result.get().getCarType());
-        verify(carRepository, times(1)).findById(1L);
+        // Assert
+        assertEquals("Sedan", result.getCarType());
     }
 
     @Test
-    void testGetCarById_ShouldThrowException_WhenCarDoesNotExist() {
+    void getCarById_shouldThrowException_whenCarNotFound() {
         when(carRepository.findById(1L)).thenReturn(Optional.empty());
 
         assertThrows(RecordNotFoundException.class, () -> carService.getCarById(1L));
-
-        verify(carRepository, times(1)).findById(1L);
     }
 
     @Test
-    void testUpdateCar_ShouldUpdateCar_WhenCarExists() {
-        Car updatedCar = new Car();
-        updatedCar.setCarType("SUV");
-        updatedCar.setOwner(testUser);
-
+    void updateCar_shouldUpdateAndReturnDto_whenCarExists() {
         when(carRepository.findById(1L)).thenReturn(Optional.of(testCar));
-        when(carRepository.save(any(Car.class))).thenReturn(updatedCar);
-
-        Car result = carService.updateCar(1L, updatedCar);
-
-        assertEquals("SUV", result.getCarType());
-        verify(carRepository, times(1)).findById(1L);
-        verify(carRepository, times(1)).save(any(Car.class));
-    }
-
-    @Test
-    void testUpdateCar_ShouldThrowException_WhenCarNotFound() {
-        when(carRepository.findById(1L)).thenReturn(Optional.empty());
-
-        assertThrows(RecordNotFoundException.class, () -> carService.updateCar(1L, new Car()));
-
-        verify(carRepository, times(1)).findById(1L);
-    }
-
-    @Test
-    void testUpdateCar_WithCarDto_ShouldUpdateCar_WhenValidDataProvided() {
-        CarDto carDto = new CarDto();
-        carDto.setCarType("Coupe");
-        carDto.setRepairRequestDate("15-03-2025");
-
-        when(carRepository.findById(1L)).thenReturn(Optional.of(testCar));
+        when(userRepository.findById("user1")).thenReturn(Optional.of(testUser));
         when(carRepository.save(any(Car.class))).thenReturn(testCar);
 
-        Car result = carService.updateCar(1L, carDto);
+        CarDto result = carService.updateCar(1L, testCarDto);
 
-        assertEquals("Coupe", result.getCarType());
-        assertEquals("15-03-2025", result.getRepairRequestDate());
-
-        verify(carRepository, times(1)).findById(1L);
-        verify(carRepository, times(1)).save(any(Car.class));
+        assertEquals("Sedan", result.getCarType());
+        verify(carRepository).save(any(Car.class));
     }
 
     @Test
-    void testUpdateCar_WithCarDto_ShouldThrowException_WhenCarTypeIsMissing() {
-        CarDto carDto = new CarDto(null, null, "15-03-2025", null, null, "user1", null);
+    void updateCar_shouldThrowException_whenCarNotFound() {
+        when(carRepository.findById(1L)).thenReturn(Optional.empty());
 
-        assertThrows(BadRequestException.class, () -> carService.updateCar(1L, carDto));
+        assertThrows(RecordNotFoundException.class, () -> carService.updateCar(1L, testCarDto));
     }
 
     @Test
-    void testPatchCar_ShouldModifyFieldsAndSave() {
+    void patchCar_shouldUpdateFieldsAndReturnDto() {
         when(carRepository.findById(1L)).thenReturn(Optional.of(testCar));
+        when(userRepository.findById("user1")).thenReturn(Optional.of(testUser));
         when(carRepository.save(any(Car.class))).thenReturn(testCar);
 
         Map<String, Object> updates = Map.of(
                 "carType", "Hatchback",
-                "repairRequestDate", "30-04-2025"
+                "repairRequestDate", "25-03-2025",
+                "ownerUsername", "user1"
         );
 
-        Car patchedCar = carService.patchCar(1L, updates);
+        CarDto result = carService.patchCar(1L, updates);
 
-        assertEquals("Hatchback", patchedCar.getCarType());
-        assertEquals("30-04-2025", patchedCar.getRepairRequestDate());
-
-        verify(carRepository, times(1)).findById(1L);
-        verify(carRepository, times(1)).save(any(Car.class));
+        assertEquals("Hatchback", result.getCarType());
+        assertEquals("25-03-2025", result.getRepairRequestDate());
     }
 
     @Test
-    void testPatchCar_ShouldThrowException_WhenCarNotFound() {
-        when(carRepository.findById(1L)).thenReturn(Optional.empty());
+    void patchCar_shouldThrowException_whenCarNotFound() {
+        when(carRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(RecordNotFoundException.class, () -> carService.patchCar(1L, Map.of("carType", "Truck")));
-
-        verify(carRepository, times(1)).findById(1L);
+        assertThrows(RecordNotFoundException.class, () -> carService.patchCar(99L, Map.of("carType", "Van")));
     }
 
     @Test
-    void testDeleteCar_ShouldDeleteCar_WhenCarExists() {
-        PdfAttachment pdfAttachment = new PdfAttachment();
-        testCar.setPdfAttachment(pdfAttachment);
-
-        Repair repair1 = new Repair();
-        Repair repair2 = new Repair();
-        testCar.setRepairs(List.of(repair1, repair2));
+    void deleteCar_shouldDeleteCarAndAttachments() {
+        PdfAttachment pdf = new PdfAttachment();
+        testCar.setPdfAttachment(pdf);
+        testCar.setRepairs(List.of(new Repair()));
 
         when(carRepository.findById(1L)).thenReturn(Optional.of(testCar));
-        doNothing().when(repairRepository).deleteAll(anyList());
-        doNothing().when(pdfAttachmentRepository).delete(any(PdfAttachment.class));
-        doNothing().when(carRepository).delete(any(Car.class));
 
         carService.deleteCar(1L);
 
-        verify(carRepository, times(1)).findById(1L);
-        verify(repairRepository, times(1)).deleteAll(anyList());
-        verify(pdfAttachmentRepository, times(1)).delete(any(PdfAttachment.class));
-        verify(carRepository, times(1)).delete(testCar);
+        verify(repairRepository).deleteAll(anyList());
+        verify(pdfAttachmentRepository).delete(any(PdfAttachment.class));
+        verify(carRepository).delete(testCar);
     }
 
     @Test
-    void testDeleteCar_ShouldThrowException_WhenCarNotFound() {
-        when(carRepository.findById(1L)).thenReturn(Optional.empty());
+    void deleteCar_shouldThrowException_whenCarNotFound() {
+        when(carRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(RecordNotFoundException.class, () -> carService.deleteCar(1L));
-
-        verify(carRepository, times(1)).findById(1L);
+        assertThrows(RecordNotFoundException.class, () -> carService.deleteCar(99L));
     }
 }
